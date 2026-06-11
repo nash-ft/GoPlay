@@ -1,0 +1,36 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar-sec") %>
+
+<div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <div class="col-10 col-sm-8 col-lg-6">
+        <img src="/images/sports.png" class="d-block mx-lg-auto img-fluid hero-image" alt="Sports Gear" width="700" height="500" loading="lazy">
+      </div>
+      <div class="col-lg-6">
+        <h1 class="display-5 fw-bold lh-1 mb-3 hero-heading">Find Sports Facilities Near You</h1>
+        <p class="lead">Discover parks, courts, gyms, golf courses, and connect with local players.</p>
+
+    <% if (!authenticated) { %>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+           <a href="/signup" class="btn btn-secondary btn-lg m-2">Sign Up</a>
+           <a href="/login" class="btn btn-secondary btn-lg m-2">Log In</a>
+        </div>
+    </div>
+  </div>
+
+    <% } else { %>
+
+        <div class="alert alert-info">
+            Hello, <strong><%= name %></strong>
+        </div>
+
+        <a href="/members" class="btn btn-primary m-2">Go to Members</a>
+        <a href="/logout" class="btn btn-danger m-2">Logout</a>
+
+    <% } %>
+
+</div>
+
+<%- include("../templates/footer") %>

@@ -1,0 +1,38 @@
+/* Fonts */
+@font-face {
+    font-family: 'FasterOne';
+    src: url('../fonts/FasterOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --primary: #444c6d;
+    --secondary: #171717;
+    --accent: #22c55e;
+}
+
+body {
+    font-family:sans-serif;
+    background-image: radial-gradient(circle, var(--primary), var(--secondary));
+}
+
+.hero-heading {
+    font-family: 'FasterOne', sans-serif;
+    font-size: 2.5rem;
+}
+
+.hero-image {
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* Navbar */
+.nav-heading {
+    font-family: 'FasterOne', sans-serif;
+    font-size: 2rem;
+}
+
+.custom-navbar {
+    background-color: #343a40; /* Dark background */
+}
