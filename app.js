@@ -56,10 +56,36 @@ app.use(session({
     }
 }));
 
+app.use((req, res, next) => {
+    res.locals.authenticated = req.session.authenticated;
+    res.locals.user_type = req.session.user_type;
+    res.locals.name = req.session.name;
+    next();
+});
+
+function isValidSession(req) {
+    if (req.session.authenticated) {
+        return true;
+    }
+    return false;
+}
+
+function sessionValidation(req,res,next) {
+    if (isValidSession(req)) {
+        next();
+    }
+    else {
+        res.redirect('/login');
+    }
+}
+
+
 // Routes
 app.get('/', (req, res) => {
-  res.send('Hello from GoPlay!');
+  res.render('pages/index');
 });
+
+app.use(express.static(__dirname + "/public"));
 
 app.use((req,res) => {
 	res.status(404);
