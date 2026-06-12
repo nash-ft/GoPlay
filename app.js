@@ -79,10 +79,178 @@ function sessionValidation(req,res,next) {
     }
 }
 
+app.get('/nosql-injection', (req,res) => {
+    res.send(`
+        noSQL injection example:
+        <form action='/nosql-injection' method='post'>
+            <input name='user' type='text' placeholder='user'>
+            <button>Submit</button>
+        </form>
+        <div style='font-family:Helvetica, arial, sans-serif;'>
+            You can use <a href="https://www.postman.com/">Postman <img src="Postman.png" style="height:45px;"/></a> to bypass this form page and perform a NoSQL injection attack.
+            <br>
+            <br>
+            URL: <code>/nosql-injection</code> <br>
+            Method: <code>POST</code> <br>
+            Body (raw: JSON): <code> { "user": "name" } </code> <br>
+            <em>(normal behaviour)</em> <br>
+            <br>
+            <strong>OR</strong> <br>
+            <br>
+            Body (raw: JSON): <code>{ "user": {"$ne": "name"} } </code><br>
+            <em>(NoSQL injection attack)</em> <br>
+            <img src="PostmanSS.png"/>
+        </div>
+        `)
+});
+
+app.post('/nosql-injection', async (req,res) => {
+	var username = req.body.user;
+
+	if (!username) {
+		res.send(`<h3>no user provided - try /nosql-injection?user=name</h3> <h3>or /nosql-injection?user[$ne]=name</h3>`);
+		return;
+	}
+	console.log("user: "+username);
+
+	const schema = Joi.string().max(20).required();
+	const validationResult = schema.validate(username);
+
+	//If we didn't use Joi to validate and check for a valid URL parameter below
+	// we could run our userCollection.find and it would be possible to attack.
+	// A URL parameter of user[$ne]=name would get executed as a MongoDB command
+	// and may result in revealing information about all users or a successful
+	// login without knowing the correct password.
+	if (validationResult.error != null) {  
+        console.log(validationResult.error);
+        res.send("<h1 style='color:darkred;'>A NoSQL injection attack was detected!!</h1>");
+        return;
+	}	
+
+	const result = await userCollection.find({username: username}).project({username: 1, password: 1, _id: 1}).toArray();
+
+	console.log(result);
+
+    res.send(`<h1>Hello ${username}</h1>`);
+});
+
+const signupSchema = Joi.object({
+    username: Joi.string().max(50).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().max(50).required()
+});
+
+const loginSchema = Joi.object({
+    username: Joi.string().required(),
+    password: Joi.string().max(50).required()
+});
 
 // Routes
 app.get('/', (req, res) => {
   res.render('pages/index');
+});
+
+app.get('/signup', (req, res) => {
+    res.render('pages/signup', {
+        error: null
+    });
+});
+
+app.post('/signup', async (req, res) => {
+
+    const validation = signupSchema.validate(req.body);
+
+    if (validation.error) {
+        return res.render('pages/signup', {
+            error: validation.error.details[0].message
+        });
+    }
+
+    const { username, email, password } = req.body;
+
+    const existingUser = await userCollection.findOne({ 
+        $or: [
+            {username},
+            {email}
+        ]
+    });
+
+if (existingUser) {
+    return res.render('pages/signup', {
+        error: 'Username or email already exists.'
+    });
+}
+
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    await userCollection.insertOne({
+        username,
+        email,
+        password: hashedPassword,
+        user_type: 'user'
+    });
+
+    req.session.authenticated = true;
+    req.session.name = username;
+    req.session.user_type = 'user';
+
+    res.redirect('/members');
+});
+
+app.get('/login', (req, res) => {
+    res.render('pages/login', {
+        error: null
+    });
+});
+
+app.post('/login', async (req, res) => {
+
+    const validation = loginSchema.validate(req.body);
+
+    if (validation.error) {
+        return res.render('pages/login', {
+            error: validation.error.details[0].message
+        });
+    }
+
+    const { username, password } = req.body;
+
+    const user = await userCollection.findOne({ username });
+
+    if (!user) {
+        return res.render('pages/login', {
+            error: 'Invalid username or password.'
+        });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
+    if (!validPassword) {
+        return res.render('pages/login', {
+            error: 'Invalid username or password.'
+        });
+    }
+
+    req.session.authenticated = true;
+    req.session.name = user.username;
+    req.session.user_type = user.user_type;
+
+    res.redirect('/members');
+});
+
+app.get('/members', sessionValidation, (req, res) => {
+    res.render('pages/members', {
+        authenticated: req.session.authenticated,
+        user_type: req.session.user_type,
+        name: req.session.name
+    });
+});
+
+app.get('/logout', (req, res) => {
+
+    req.session.destroy();
+
+    res.redirect('/');
 });
 
 app.use(express.static(__dirname + "/public"));

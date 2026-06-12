@@ -1,0 +1,39 @@
+<%- include('../templates/header') %>
+
+<div class="container mt-5">
+     <h1 class="auth-heading d-flex justify-content-center" href="#">GoPlay</h1>
+  <div class="d-flex justify-content-center">
+<div class="card signup-card" style="width: 23rem;">
+  <div class="card-body">
+    <h5 class="card-title">Sign Up</h5>
+    <p class="card-text">Create an account to get started.</p>
+
+    <% if (error) { %>
+    <div class="alert alert-danger">
+        <%= error %>
+    </div>
+    <% } %>
+
+    <form action="/signup" method="POST">
+  <div class="mb-3">
+    <label for="user" class="form-label">Username</label>
+    <input type="text" class="form-control" pattern="^[a-zA-Z0-9_]{3,20}$" name="username" id="user" required>
+  </div>
+  <div class="mb-3">
+    <label for="email" class="form-label">Email address</label>
+    <input type="email" class="form-control" name="email" id="email" aria-describedby="emailHelp" placeholder="example@domain.com" required>
+    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+  </div>
+  <div class="mb-3">
+    <label for="pass" class="form-label">Password</label>
+    <input type="password" class="form-control" name="password" id="pass" required>
+  </div>
+  <button type="submit" class="btn btn-secondary buttons">Submit</button>
+</form>
+    <a href="/login">Already have an account? Login</a>
+  </div>
+</div>
+</div>
+</div>
+
+<%- include('../templates/footer') %>
