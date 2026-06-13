@@ -6,6 +6,11 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'Roboto';
+    src: url('../fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
+}
+
 :root {
     --primary: #444c6d;
     --secondary: #171717;
@@ -29,19 +34,24 @@ body {
 
 .nav-heading {
     font-family: 'FasterOne', sans-serif;
-    font-size: 2rem;
-    color: #1c3558
+    font-size: 2.5rem;
+    color: #1f2a3a
 }
 
 .nav-heading:hover {
-    color: #565e7b;
+    color: #1f232f;
 }
 
 .nav-link {
+    font-family: 'Roboto', sans-serif;
     color: #fbfbfb;
 }
 
 .nav-link:hover {
+    color: #949896;
+}
+
+.nav-link.active {
     color: #949896;
 }
 
@@ -189,4 +199,31 @@ body {
     margin-top: 0.5rem;
     padding: 0.75rem;
     border-radius: 10px;
+}
+
+/* MEMBERS */
+.content {
+    background-color: #141920;
+    color: #e5e7eb;
+    padding: 2rem;
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+}
+
+.card {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    font-family: 'Roboto', sans-serif;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    border-radius: 15px;
+}
+
+.page-buttons:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.card-body h3 {
+    margin-bottom: 10px;
 }

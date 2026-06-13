@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/nash-ft/GoPlay#readme",
   "dependencies": {
+    "axios": "^1.17.0",
     "bcrypt": "^6.0.0",
     "connect-mongo": "^6.0.0",
     "dotenv": "^17.4.2",

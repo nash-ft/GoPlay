@@ -1,0 +1,90 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+    <h1 class="display-4">Hello, <%= name %>!</h1>
+    <h5>Quote of the day:</h5>
+    <p id="quote"></p>
+
+    <div class="row g-4 mt-4">
+        <div class="col-md-4">
+            <a href="/map" class="text-decoration-none">
+                <div class="card page-buttons h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h3>Map</h3>
+                        <p>Find nearby sports facilities.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/quiz" class="text-decoration-none">
+                <div class="card page-buttons h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h3>🏆 Quiz</h3>
+                        <p>Test your sports knowledge.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/discuss" class="text-decoration-none">
+                <div class="card page-buttons h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h3>Discuss</h3>
+                        <p>Connect with other players.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="mt-5">
+    <h2>Latest Sports News</h2>
+
+    <div class="row">
+        <% articles.forEach(article => { %>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+
+                    <% if(article.urlToImage) { %>
+                        <img
+                            src="<%= article.urlToImage %>"
+                            class="card-img-top"
+                            alt="News image"
+                        >
+                    <% } %>
+
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <%= article.title %>
+                        </h5>
+
+                        <p class="card-text">
+                            <%= article.description || "No description available." %>
+                        </p>
+
+                        <a
+                            href="<%= article.url %>"
+                            target="_blank"
+                            class="btn btn-secondary buttons"
+                        >
+                            Read More
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        <% }) %>
+    </div>
+</div>
+</div>
+
+
+<script src="/js/members.js"></script>
+
+<%- include("../templates/footer") %>

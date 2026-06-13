@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const {MongoStore} = require('connect-mongo');
+const axios = require('axios');
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
 
@@ -238,11 +239,34 @@ app.post('/login', async (req, res) => {
     res.redirect('/members');
 });
 
-app.get('/members', sessionValidation, (req, res) => {
+app.get('/members', sessionValidation, async (req, res) => {
+
+    let articles = [];
+
+    try {
+        const response = await axios.get(
+            `https://newsapi.org/v2/top-headlines`,
+            {
+                params: {
+                    category: 'sports',
+                    country: 'us',
+                    pageSize: 6,
+                    apiKey: process.env.NEWS_API_KEY
+                }
+            }
+        );
+
+        articles = response.data.articles;
+    }
+    catch (err) {
+        console.error(err);
+    }
+
     res.render('pages/members', {
         authenticated: req.session.authenticated,
         user_type: req.session.user_type,
-        name: req.session.name
+        name: req.session.name,
+        articles
     });
 });
 
