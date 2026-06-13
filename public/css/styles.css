@@ -203,31 +203,17 @@ body {
 
 /* MEMBERS */
 .content {
-    /* background-color: #141920; */
-    background-image: url('../images/exm.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-color: #141920;
     color: #e5e7eb;
     padding: 2rem;
     font-family: 'Roboto', sans-serif;
-    height: 100vh;
+    min-height: 100vh;
 }
-
-/* .page-buttons {
-    background-color: #1f2937;
-    color: #e5e7eb;
-    text-align: center;
-    border: none;
-    border-radius: 16px;
-    width: 150px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    padding: 0.5rem;
-} */
 
 .card {
     background-color: #1f2937;
     color: #e5e7eb;
+    font-family: 'Roboto', sans-serif;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: none;
     border-radius: 15px;

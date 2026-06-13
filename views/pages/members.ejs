@@ -41,6 +41,47 @@
             </a>
         </div>
     </div>
+    <div class="mt-5">
+    <h2>Latest Sports News</h2>
+
+    <div class="row">
+        <% articles.forEach(article => { %>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+
+                    <% if(article.urlToImage) { %>
+                        <img
+                            src="<%= article.urlToImage %>"
+                            class="card-img-top"
+                            alt="News image"
+                        >
+                    <% } %>
+
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <%= article.title %>
+                        </h5>
+
+                        <p class="card-text">
+                            <%= article.description || "No description available." %>
+                        </p>
+
+                        <a
+                            href="<%= article.url %>"
+                            target="_blank"
+                            class="btn btn-secondary buttons"
+                        >
+                            Read More
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        <% }) %>
+    </div>
+</div>
 </div>
 
 

@@ -21,15 +21,15 @@
         Find Sports Facilities Near You
       </h1>
 
+      <% if (authenticated) { %>
+        <div class="alert alert-secondary mt-4">
+        <strong><%= name %></strong>
+        </div>
+      <% } %>
+
       <p class="lead">
         Discover parks, courts, gyms, golf courses, and connect with local players.
       </p>
-
-      <% if (authenticated) { %>
-        <div class="alert alert-info mt-4">
-          Hello, <strong><%= name %></strong>
-        </div>
-      <% } %>
 
     </div>
 
