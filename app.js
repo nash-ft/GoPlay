@@ -281,7 +281,7 @@ app.use(express.static(__dirname + "/public"));
 
 app.use((req,res) => {
 	res.status(404);
-	res.send("404: File Not Found");
+	res.render('pages/404');
 });
 
 app.listen(port, () => {
