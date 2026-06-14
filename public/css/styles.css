@@ -211,7 +211,7 @@ body {
 }
 
 .card {
-    background-color: #1f2937;
+    background-color: #192433;
     color: #e5e7eb;
     font-family: 'Roboto', sans-serif;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -226,4 +226,9 @@ body {
 
 .card-body h3 {
     margin-bottom: 10px;
+}
+
+
+.text-col {
+    color: #959292;
 }
