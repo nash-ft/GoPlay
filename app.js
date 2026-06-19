@@ -270,6 +270,10 @@ app.get('/members', sessionValidation, async (req, res) => {
     });
 });
 
+app.get('/map', (req, res) => {
+    res.render('pages/map')
+})
+
 app.get('/logout', (req, res) => {
 
     req.session.destroy();

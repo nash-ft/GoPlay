@@ -3,12 +3,12 @@
 <%- include("../templates/navbar") %>
 
 <div class="content">
-    <h1 class="display-4">Hello, <%= name %>!</h1>
+    <h1 class="display-5">Hello, <%= name %>!</h1>
     <h5>Quote of the day:</h5>
     <p id="quote"></p>
 
     <div class="row g-4 mt-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="/map" class="text-decoration-none">
                 <div class="card page-buttons h-100 shadow-sm text-center">
                     <div class="card-body">
@@ -19,23 +19,34 @@
             </a>
         </div>
 
-        <div class="col-md-4">
-            <a href="/quiz" class="text-decoration-none">
-                <div class="card page-buttons h-100 shadow-sm text-center">
-                    <div class="card-body">
-                        <h3>🏆 Quiz</h3>
-                        <p>Test your sports knowledge.</p>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="/discuss" class="text-decoration-none">
                 <div class="card page-buttons h-100 shadow-sm text-center">
                     <div class="card-body">
                         <h3>Discuss</h3>
                         <p>Connect with other players.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="/posts" class="text-decoration-none">
+                <div class="card page-buttons h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h3>Posts</h3>
+                        <p>View posts by other players</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="/quiz" class="text-decoration-none">
+                <div class="card page-buttons h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h3>🏆 Quiz</h3>
+                        <p>Test your sports knowledge.</p>
                     </div>
                 </div>
             </a>
