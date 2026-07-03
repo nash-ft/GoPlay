@@ -1,28 +1,39 @@
+// Map
 const map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://tiles.openfreemap.org/styles/liberty',
-    center: [-123.1207, 49.2827],
-    zoom: 12
+    container: 'map', // container id
+    style: 'https://tiles.openfreemap.org/styles/bright',
+    center: [-123.1207, 49.2827], // starting position
+    zoom: 15, // starting zoom
+    rollEnabled: true
 });
 
-const geolocate = new maplibregl.GeolocateControl({
-    positionOptions: {
-        enableHighAccuracy: true
-    },
-    trackUserLocation: true
-});
+// Add zoom and rotation controls to the map.
+map.addControl(new maplibregl.NavigationControl({
+    visualizePitch: true,
+    visualizeRoll: true,
+    showZoom: true,
+    showCompass: true
+}));
 
-map.addControl(geolocate);
-map.addControl(new maplibregl.NavigationControl());
+// Add geolocate control to the map.
+map.addControl(
+    new maplibregl.GeolocateControl({
+        positionOptions: {
+            enableHighAccuracy: true
+        },
+        trackUserLocation: true
+    })
+);
 
-map.on('load', () => {
-    geolocate.trigger();
-});
+// create the popup
+const popup = new maplibregl.Popup({offset: 25}).setText(
+    'This is a popup'
+);
 
-geolocate.on('geolocate', async (e) => {
-    const lat = e.coords.latitude;
-    const lon = e.coords.longitude;
-
-    await loadSportsFacilities(lat, lon);
-});
+// Markers
+const marker = new maplibregl.Marker({
+    color: "#cf0f0f",
+    })
+    .setLngLat([-123.1207, 49.2827])
+    .addTo(map)    .setPopup(popup);
 
