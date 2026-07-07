@@ -15,25 +15,38 @@ map.addControl(new maplibregl.NavigationControl({
     showCompass: true
 }));
 
+let userLocation = null;
+
 // Add geolocate control to the map.
-map.addControl(
-    new maplibregl.GeolocateControl({
-        positionOptions: {
-            enableHighAccuracy: true
-        },
-        trackUserLocation: true
-    })
-);
+const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: {
+        enableHighAccuracy: true
+    },
+    trackUserLocation: true
+});
 
-// create the popup
-const popup = new maplibregl.Popup({offset: 25}).setText(
-    'This is a popup'
-);
+map.addControl(geolocate);
 
-// Markers
-const marker = new maplibregl.Marker({
-    color: "#cf0f0f",
-    })
-    .setLngLat([-123.1207, 49.2827])
-    .addTo(map)    .setPopup(popup);
+// Listen for errors
+geolocate.on("error", (error) => {
+    console.error("Geolocation error:", error);
+
+    alert("Unable to get your location. Please enable location services and try again.");
+});
+
+geolocate.on("geolocate", (event) => {
+    userLocation = {
+        lat: event.coords.latitude,
+        lng: event.coords.longitude
+    };
+});
+
+map.on('load', () => {
+    geolocate.trigger();
+});
+
+
+
+
+
 
