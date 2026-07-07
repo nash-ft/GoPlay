@@ -1,0 +1,235 @@
+/* Fonts */
+@font-face {
+    font-family: 'FasterOne';
+    src: url('../fonts/FasterOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
+}
+
+:root {
+    --primary: #444c6d;
+    --secondary: #171717;
+    --accent: #22c55e;
+}
+
+body {
+    font-family:sans-serif;
+    background-image: radial-gradient(circle, var(--primary), var(--secondary));
+}
+
+.buttons {
+    border-radius: 25px;
+}
+
+/* Navbar */
+.custom-navbar {
+    /* background-color: #343a40; Dark background */
+    background-color: black;
+}
+
+.nav-heading {
+    font-family: 'FasterOne', sans-serif;
+    font-size: 2.5rem;
+    color: #1f2a3a
+}
+
+.nav-heading:hover {
+    color: #1f232f;
+}
+
+.nav-link {
+    font-family: 'Roboto', sans-serif;
+    color: #fbfbfb;
+}
+
+.nav-link:hover {
+    color: #949896;
+}
+
+.nav-link.active {
+    color: #949896;
+}
+
+.auth-heading {
+    font-family: 'FasterOne', sans-serif;
+    font-size: 2.5rem;
+}
+
+/* Signup card */
+.signup-card {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    padding: 1rem;
+}
+
+/* Inputs */
+.signup-card .form-control {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+/* Placeholder text */
+.signup-card .form-control::placeholder {
+    color: #9ca3af;
+}
+
+/* Input focus */
+.signup-card .form-control:focus {
+    background-color: #374151;
+    color: #ffffff;
+    border-color: #6b7280;
+    box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
+}
+
+/* Labels */
+.signup-card .form-label {
+    color: #d1d5db;
+    font-weight: 500;
+}
+
+/* Small helper text */
+.signup-card .form-text {
+    color: #9ca3af;
+}
+
+/* Heading */
+.signup-card .card-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Link */
+.signup-card a {
+    display: block;
+    margin-top: 1rem;
+    color: #9ca3af;
+    text-decoration: none;
+}
+
+.signup-card a:hover {
+    color: #ffffff;
+}
+
+/* Submit button */
+.signup-card .buttons {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+}
+
+/* Login card */
+.login-card {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    padding: 1rem;
+}
+
+
+/* Inputs */
+.login-card .form-control {
+    background-color: #374151;
+    border: 1px solid #4b5563;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+/* Placeholder text */
+.login-card .form-control::placeholder {
+    color: #9ca3af;
+}
+
+/* Input focus */
+.login-card .form-control:focus {
+    background-color: #374151;
+    color: #ffffff;
+    border-color: #6b7280;
+    box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
+}
+
+/* Labels */
+.login-card .form-label {
+    color: #d1d5db;
+    font-weight: 500;
+}
+
+/* Small helper text */
+.login-card .form-text {
+    color: #9ca3af;
+}
+
+/* Heading */
+.login-card .card-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Link */
+.login-card a {
+    display: block;
+    margin-top: 1rem;
+    color: #9ca3af;
+    text-decoration: none;
+}
+
+.login-card a:hover {
+    color: #ffffff;
+}
+
+/* Submit button */
+.login-card .buttons {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+}
+
+/* MEMBERS */
+.content {
+    background-color: #141920;
+    color: #e5e7eb;
+    padding: 2rem;
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+}
+
+.card {
+    background-color: #192433;
+    color: #e5e7eb;
+    font-family: 'Roboto', sans-serif;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+    border-radius: 15px;
+}
+
+.page-buttons:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.card-body h3 {
+    margin-bottom: 10px;
+}
+
+
+.text-col {
+    color: #959292;
+}
+

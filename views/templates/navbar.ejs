@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-lg custom-navbar">
+  <div class="container-fluid">
+    <a class="navbar-brand nav-heading" href="/">GoPlay</a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+        <!-- Nav Links -->
+        <ul class="navbar-nav ms-3">
+          <li class="nav-item">
+            <a class="nav-link" href="/members">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/map">Map</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/quiz">Test Your Knowledge</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/discuss">Discuss</a>
+          </li>
+        </ul>
+
+        <!-- Auth Buttons -->
+        <div class="ms-auto d-flex gap-2">
+          <% if (!authenticated) { %>
+            <a class="btn btn-secondary buttons" href="/signup">Sign Up</a>
+            <a class="btn btn-secondary buttons" href="/login">Login</a>
+          <% } else { %>
+            <a class="btn btn-secondary buttons" href="/profile">Profile</a>
+            <a class="btn btn-danger buttons" href="/logout">Logout</a>
+          <% } %>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</nav>

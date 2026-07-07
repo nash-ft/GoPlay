@@ -1,0 +1,39 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="container col-xxl-8 px-4 py-5">
+  <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+
+    <div class="col-10 col-sm-8 col-lg-6">
+      <img
+        src="/images/sports.png"
+        class="d-block mx-lg-auto img-fluid"
+        alt="Sports Gear"
+        width="700"
+        height="500"
+        loading="lazy"
+      >
+    </div>
+
+    <div class="col-lg-6">
+      <h1 class="display-3 fw-bold lh-1 mb-3">
+        Find Sports Facilities Near You
+      </h1>
+
+      <% if (authenticated) { %>
+        <div class="alert alert-secondary mt-4">
+        <strong><%= name %></strong>
+        </div>
+      <% } %>
+
+      <p class="lead">
+        Discover parks, courts, gyms, golf courses, and connect with local players.
+      </p>
+
+    </div>
+
+  </div>
+</div>
+
+<%- include("../templates/footer") %>
