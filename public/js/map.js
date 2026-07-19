@@ -15,7 +15,7 @@ map.addControl(new maplibregl.NavigationControl({
     showCompass: true
 }));
 
-let userLocation = null;
+// let userLocation = null;
 
 // Add geolocate control to the map.
 const geolocate = new maplibregl.GeolocateControl({
@@ -35,15 +35,154 @@ geolocate.on("error", (error) => {
 });
 
 geolocate.on("geolocate", (event) => {
-    userLocation = {
-        lat: event.coords.latitude,
-        lng: event.coords.longitude
-    };
+
+    const lat = event.coords.latitude;
+    const lng = event.coords.longitude;
+
+    loadSportsFacilities(lat, lng);
+
 });
 
 map.on('load', () => {
     geolocate.trigger();
 });
+
+// Load sports facilities from Overpass API
+async function loadSportsFacilities(lat, lng) {
+
+    console.log("Loading nearby sports facilities...");
+
+    // Build Overpass query
+    const query = `
+    [out:json];
+
+    (
+        node["sport"](around:5000,${lat},${lng});
+        way["sport"](around:5000,${lat},${lng});
+        relation["sport"](around:5000,${lat},${lng});
+
+        node["leisure"="fitness_centre"](around:5000,${lat},${lng});
+        way["leisure"="fitness_centre"](around:5000,${lat},${lng});
+        relation["leisure"="fitness_centre"](around:5000,${lat},${lng});
+    );
+
+    out center;
+    `;
+
+    try {
+
+        // Send request to Overpass API
+        const response = await fetch(
+            "https://overpass-api.de/api/interpreter",
+            {
+                method: "POST",
+                body: query
+            }
+        );
+
+        // Convert response to JSON
+        const data = await response.json();
+
+        console.log(data.elements);
+
+        // Loop through each sports facility
+        data.elements.forEach(facility => {
+
+            addSportsFacilityMarker(facility);
+
+        });
+
+    }
+    catch(error){
+
+        console.error("Error loading sports facilities:", error);
+
+    }
+
+}
+
+function getFacilityType(facility) {
+
+    if (facility.tags.leisure === "fitness_centre") {
+        return "gym";
+    }
+
+    return facility.tags.sport || "default";
+
+}
+
+// Markers
+function addSportsFacilityMarker(facility) {
+
+    // Ways and relations store coordinates in "center"
+    const lat = facility.lat || facility.center?.lat;
+    const lng = facility.lon || facility.center?.lon;
+
+    if (!lat || !lng) return;
+
+    const facilityType = getFacilityType(facility);
+
+    // Create popup
+    const popup = new maplibregl.Popup({ offset: 20 })
+        .setHTML(`
+            <div class="facility-popup">
+                <h5>${facility.tags.name || "Sports Facility"}</h5>
+                <p><strong>Type:</strong> ${facilityType} <br>
+                <strong>Access:</strong> ${facility.tags.access || "Public"}</p>
+            </div>
+        `);
+
+    const markerElement = document.createElement("img");
+
+    markerElement.src = getMarkerImage(facilityType);
+
+    markerElement.width = 25;
+    markerElement.height = 25;
+    markerElement.style.cursor = "pointer";
+
+    // Create marker
+    const marker = new maplibregl.Marker({
+    element: markerElement
+    })
+    .setLngLat([lng, lat])
+    .setPopup(popup)
+    .addTo(map);
+
+}
+
+function getMarkerImage(type) {
+
+    switch (type) {
+        case "basketball":
+            return "images/markers/basketball.png";
+
+        case "soccer":
+            return "images/markers/soccer.png";
+
+        case "tennis":
+            return "images/markers/tennis.png";
+
+        case "golf":
+            return "images/markers/golf.png";
+
+        case "baseball":
+            return "images/markers/baseball.png";
+
+        case "volleyball":
+            return "images/markers/volleyball.png";
+
+        case "swimming":
+            return "images/markers/swimming.png";
+            
+        case "gym":
+            return "images/markers/gym.png";    
+
+        default:
+            return "images/markers/default.png";
+    }
+
+}
+
 
 
 
