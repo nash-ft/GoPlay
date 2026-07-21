@@ -15,6 +15,20 @@ map.addControl(new maplibregl.NavigationControl({
     showCompass: true
 }));
 
+// Object to hold all markers
+const markers = {
+    basketball: [],
+    soccer: [],
+    tennis: [],
+    golf: [],
+    baseball: [],
+    volleyball: [],
+    swimming: [],
+    gym: [],
+    default: []
+};
+
+let currentFilter = "all";
 // let userLocation = null;
 
 // Add geolocate control to the map.
@@ -85,6 +99,11 @@ async function loadSportsFacilities(lat, lng) {
 
         console.log(data.elements);
 
+        Object.values(markers).forEach(markerArray => {
+            markerArray.forEach(marker => marker.remove());
+            markerArray.length = 0;
+        });
+
         // Loop through each sports facility
         data.elements.forEach(facility => {
 
@@ -136,8 +155,8 @@ function addSportsFacilityMarker(facility) {
 
     markerElement.src = getMarkerImage(facilityType);
 
-    markerElement.width = 25;
-    markerElement.height = 25;
+    markerElement.width = 35;
+    markerElement.height = 35;
     markerElement.style.cursor = "pointer";
 
     // Create marker
@@ -145,8 +164,20 @@ function addSportsFacilityMarker(facility) {
     element: markerElement
     })
     .setLngLat([lng, lat])
-    .setPopup(popup)
-    .addTo(map);
+    .setPopup(popup);
+
+    if (!markers[facilityType]) {
+    markers[facilityType] = [];
+    }
+
+    markers[facilityType].push(marker);
+
+    if (
+    currentFilter === "all" ||
+    currentFilter === facilityType
+    ) {
+    marker.addTo(map);
+    }
 
 }
 
@@ -182,6 +213,48 @@ function getMarkerImage(type) {
     }
 
 }
+
+// Create filter
+function filterMarkers(type) {
+
+    currentFilter = type;
+
+    Object.values(markers).forEach(markerArray => {
+        markerArray.forEach(marker => marker.remove());
+    });
+
+    if (type === "all") {
+
+        Object.values(markers).forEach(markerArray => {
+            markerArray.forEach(marker => marker.addTo(map));
+        });
+
+        return;
+    }
+
+    if (markers[type]) {
+
+        markers[type].forEach(marker => marker.addTo(map));
+
+    }
+
+}
+
+// Connecting the buttons
+document.querySelectorAll("#filter-buttons button").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        document.querySelectorAll("#filter-buttons button")
+            .forEach(btn => btn.classList.remove("active"));
+
+        button.classList.add("active");
+
+        filterMarkers(button.dataset.type);
+
+    });
+
+});
 
 
 
