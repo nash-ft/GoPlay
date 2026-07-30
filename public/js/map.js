@@ -1,7 +1,7 @@
 // Map
 const map = new maplibregl.Map({
     container: 'map', // container id
-    style: 'https://tiles.openfreemap.org/styles/bright',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
     center: [-123.1207, 49.2827], // starting position
     zoom: 15, // starting zoom
     rollEnabled: true
@@ -141,15 +141,33 @@ function addSportsFacilityMarker(facility) {
 
     const facilityType = getFacilityType(facility);
 
+    const name = facility.tags.name || "Sports Facility";
+
     // Create popup
     const popup = new maplibregl.Popup({ offset: 20 })
-        .setHTML(`
-            <div class="facility-popup">
-                <h5>${facility.tags.name || "Sports Facility"}</h5>
-                <p><strong>Type:</strong> ${facilityType} <br>
-                <strong>Access:</strong> ${facility.tags.access || "Public"}</p>
+    .setHTML(`
+        <div class="facility-popup">
+            <h5>${name}</h5>
+
+            <p>
+                <strong>Sport:</strong> ${facilityType}<br>
+                <strong>Distance:</strong> <span id="distance-${facility.id}">Calculating...</span><br>
+            </p>
+
+            <div class="popup-buttons">
+                <button class="btn btn-primary btn-sm directions-btn"
+                    data-lat="${lat}"
+                    data-lng="${lng}">
+                    Directions
+                </button>
+
+                <button class="btn btn-outline-success btn-sm save-btn"
+                    data-id="${facility.id}">
+                    Save
+                </button>
             </div>
-        `);
+        </div>
+    `);
 
     const markerElement = document.createElement("img");
 
