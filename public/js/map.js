@@ -1,73 +1,82 @@
 // Map
 const map = new maplibregl.Map({
-    container: 'map', // container id
-    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    center: [-123.1207, 49.2827], // starting position
-    zoom: 15, // starting zoom
-    rollEnabled: true
+  container: "map", // container id
+  style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  center: [-123.1207, 49.2827], // starting position
+  zoom: 15, // starting zoom
+  rollEnabled: true,
 });
 
 // Add zoom and rotation controls to the map.
-map.addControl(new maplibregl.NavigationControl({
+map.addControl(
+  new maplibregl.NavigationControl({
     visualizePitch: true,
     visualizeRoll: true,
     showZoom: true,
-    showCompass: true
-}));
+    showCompass: true,
+  }),
+  "bottom-right",
+);
 
 // Object to hold all markers
 const markers = {
-    basketball: [],
-    soccer: [],
-    tennis: [],
-    golf: [],
-    baseball: [],
-    volleyball: [],
-    swimming: [],
-    gym: [],
-    default: []
+  basketball: [],
+  soccer: [],
+  tennis: [],
+  golf: [],
+  baseball: [],
+  volleyball: [],
+  swimming: [],
+  gym: [],
+  default: [],
 };
 
 let currentFilter = "all";
-// let userLocation = null;
+let userLocation = null;
+let isLoadingFacilities = false;
+let suggestionTimer = null;
 
 // Add geolocate control to the map.
 const geolocate = new maplibregl.GeolocateControl({
-    positionOptions: {
-        enableHighAccuracy: true
-    },
-    trackUserLocation: true
+  positionOptions: {
+    enableHighAccuracy: true,
+  },
+  trackUserLocation: false,
+  showUserHeading: true,
 });
 
-map.addControl(geolocate);
+map.addControl(geolocate, "bottom-right");
 
 // Listen for errors
 geolocate.on("error", (error) => {
-    console.error("Geolocation error:", error);
+  console.error("Geolocation error:", error);
 
-    alert("Unable to get your location. Please enable location services and try again.");
+  alert(
+    "Unable to get your location. Please enable location services and try again.",
+  );
 });
 
 geolocate.on("geolocate", (event) => {
+  userLocation = {
+    lat: event.coords.latitude,
+    lng: event.coords.longitude,
+  };
 
-    const lat = event.coords.latitude;
-    const lng = event.coords.longitude;
-
-    loadSportsFacilities(lat, lng);
-
+  loadSportsFacilities(userLocation.lat, userLocation.lng);
 });
 
-map.on('load', () => {
-    geolocate.trigger();
+map.on("load", () => {
+  geolocate.trigger();
 });
 
 // Load sports facilities from Overpass API
 async function loadSportsFacilities(lat, lng) {
+  if (isLoadingFacilities) return;
 
-    console.log("Loading nearby sports facilities...");
+  isLoadingFacilities = true;
 
-    // Build Overpass query
-    const query = `
+  // Build Overpass query
+  const query = `
     [out:json];
 
     (
@@ -83,74 +92,64 @@ async function loadSportsFacilities(lat, lng) {
     out center;
     `;
 
-    try {
+  try {
+    console.log("Loading nearby sports facilities...");
 
-        // Send request to Overpass API
-        const response = await fetch(
-            "https://overpass-api.de/api/interpreter",
-            {
-                method: "POST",
-                body: query
-            }
-        );
+    const response = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: query,
+    });
 
-        // Convert response to JSON
-        const data = await response.json();
-
-        console.log(data.elements);
-
-        Object.values(markers).forEach(markerArray => {
-            markerArray.forEach(marker => marker.remove());
-            markerArray.length = 0;
-        });
-
-        // Loop through each sports facility
-        data.elements.forEach(facility => {
-
-            addSportsFacilityMarker(facility);
-
-        });
-
-    }
-    catch(error){
-
-        console.error("Error loading sports facilities:", error);
-
+    if (!response.ok) {
+      throw new Error(`Overpass Error: ${response.status}`);
     }
 
+    const data = await response.json();
+
+    Object.values(markers).forEach((markerArray) => {
+      markerArray.forEach((marker) => marker.remove());
+      markerArray.length = 0;
+    });
+
+    data.elements.forEach((facility) => {
+      addSportsFacilityMarker(facility);
+    });
+  } catch (error) {
+    console.error(error);
+  } finally {
+    isLoadingFacilities = false;
+  }
 }
 
 function getFacilityType(facility) {
+  if (facility.tags.leisure === "fitness_centre") {
+    return "gym";
+  }
 
-    if (facility.tags.leisure === "fitness_centre") {
-        return "gym";
-    }
-
-    return facility.tags.sport || "default";
-
+  return facility.tags.sport || "default";
 }
 
 // Markers
 function addSportsFacilityMarker(facility) {
+  // Ways and relations store coordinates in "center"
+  const lat = facility.lat || facility.center?.lat;
+  const lng = facility.lon || facility.center?.lon;
 
-    // Ways and relations store coordinates in "center"
-    const lat = facility.lat || facility.center?.lat;
-    const lng = facility.lon || facility.center?.lon;
+  if (!lat || !lng) return;
 
-    if (!lat || !lng) return;
+  const facilityType = getFacilityType(facility);
 
-    const facilityType = getFacilityType(facility);
+  const name = facility.tags.name || "Sports Facility";
+  const access = facility.tags.access || "Unknown";
 
-    const name = facility.tags.name || "Sports Facility";
-
-    // Create popup
-    const popup = new maplibregl.Popup({ offset: 20 })
-    .setHTML(`
+  // Create popup
+  const popup = new maplibregl.Popup({ offset: 20 }).setHTML(`
         <div class="facility-popup">
             <h5>${name}</h5>
 
             <p>
                 <strong>Sport:</strong> ${facilityType}<br>
+                <strong>Access:</strong> ${access}<br>
                 <strong>Distance:</strong> <span id="distance-${facility.id}">Calculating...</span><br>
             </p>
 
@@ -169,114 +168,222 @@ function addSportsFacilityMarker(facility) {
         </div>
     `);
 
-    const markerElement = document.createElement("img");
+  const markerElement = document.createElement("img");
 
-    markerElement.src = getMarkerImage(facilityType);
+  markerElement.src = getMarkerImage(facilityType);
 
-    markerElement.width = 35;
-    markerElement.height = 35;
-    markerElement.style.cursor = "pointer";
+  markerElement.width = 35;
+  markerElement.height = 35;
+  markerElement.style.cursor = "pointer";
 
-    // Create marker
-    const marker = new maplibregl.Marker({
-    element: markerElement
-    })
+  // Create marker
+  const marker = new maplibregl.Marker({
+    element: markerElement,
+  })
     .setLngLat([lng, lat])
     .setPopup(popup);
 
-    if (!markers[facilityType]) {
+  if (!markers[facilityType]) {
     markers[facilityType] = [];
-    }
+  }
 
-    markers[facilityType].push(marker);
+  markers[facilityType].push(marker);
 
-    if (
-    currentFilter === "all" ||
-    currentFilter === facilityType
-    ) {
+  if (currentFilter === "all" || currentFilter === facilityType) {
     marker.addTo(map);
-    }
-
+  }
 }
 
 function getMarkerImage(type) {
+  switch (type) {
+    case "basketball":
+      return "images/markers/basketball.png";
 
-    switch (type) {
-        case "basketball":
-            return "images/markers/basketball.png";
+    case "soccer":
+      return "images/markers/soccer.png";
 
-        case "soccer":
-            return "images/markers/soccer.png";
+    case "tennis":
+      return "images/markers/tennis.png";
 
-        case "tennis":
-            return "images/markers/tennis.png";
+    case "golf":
+      return "images/markers/golf.png";
 
-        case "golf":
-            return "images/markers/golf.png";
+    case "baseball":
+      return "images/markers/baseball.png";
 
-        case "baseball":
-            return "images/markers/baseball.png";
+    case "volleyball":
+      return "images/markers/volleyball.png";
 
-        case "volleyball":
-            return "images/markers/volleyball.png";
+    case "swimming":
+      return "images/markers/swimming.png";
 
-        case "swimming":
-            return "images/markers/swimming.png";
-            
-        case "gym":
-            return "images/markers/gym.png";    
+    case "gym":
+      return "images/markers/gym.png";
 
-        default:
-            return "images/markers/default.png";
-    }
-
+    default:
+      return "images/markers/default.png";
+  }
 }
 
 // Create filter
 function filterMarkers(type) {
+  currentFilter = type;
 
-    currentFilter = type;
+  Object.values(markers).forEach((markerArray) => {
+    markerArray.forEach((marker) => marker.remove());
+  });
 
-    Object.values(markers).forEach(markerArray => {
-        markerArray.forEach(marker => marker.remove());
+  if (type === "all") {
+    Object.values(markers).forEach((markerArray) => {
+      markerArray.forEach((marker) => marker.addTo(map));
     });
 
-    if (type === "all") {
+    return;
+  }
 
-        Object.values(markers).forEach(markerArray => {
-            markerArray.forEach(marker => marker.addTo(map));
-        });
-
-        return;
-    }
-
-    if (markers[type]) {
-
-        markers[type].forEach(marker => marker.addTo(map));
-
-    }
-
+  if (markers[type]) {
+    markers[type].forEach((marker) => marker.addTo(map));
+  }
 }
 
 // Connecting the buttons
-document.querySelectorAll("#filter-buttons button").forEach(button => {
+document.querySelectorAll("#filter-buttons button").forEach((button) => {
+  button.addEventListener("click", () => {
+    document
+      .querySelectorAll("#filter-buttons button")
+      .forEach((btn) => btn.classList.remove("active"));
 
-    button.addEventListener("click", () => {
+    button.classList.add("active");
 
-        document.querySelectorAll("#filter-buttons button")
-            .forEach(btn => btn.classList.remove("active"));
+    filterMarkers(button.dataset.type);
+  });
+});
 
-        button.classList.add("active");
+const searchInput = document.getElementById("search-input");
+const searchButton = document.getElementById("search-button");
+const searchResults = document.getElementById("search-results");
+const clearSearchButton = document.getElementById("clear-search");
 
-        filterMarkers(button.dataset.type);
+async function loadSuggestions() {
+  const query = searchInput.value.trim();
+
+  if (query.length < 2) {
+    searchResults.innerHTML = "";
+
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+
+    const results = await response.json();
+
+    searchResults.innerHTML = "";
+
+    results.forEach((place) => {
+      const option = document.createElement("div");
+
+      option.className = "search-result";
+
+      option.textContent = place.display_name.split(",")[0];
+
+      option.addEventListener("click", () => {
+        searchInput.value = place.display_name;
+
+        searchResults.innerHTML = "";
+
+        searchLocation();
+      });
+
+      searchResults.appendChild(option);
+    });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function searchLocation() {
+
+  searchResults.innerHTML = "";  
+  const query = searchInput.value.trim();
+
+  if (!query) return;
+
+  try {
+    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+
+    const results = await response.json();
+
+    if (!results.length) {
+      alert("No locations found.");
+
+      return;
+    }
+
+    const place = results[0];
+
+    const lat = Number(place.lat);
+    const lon = Number(place.lon);
+
+    map.flyTo({
+    center: [lon, lat],
+    zoom: 15
+    });
+
+    map.once("moveend", () => {
+
+        loadSportsFacilities(lat, lon);
 
     });
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+searchInput.addEventListener("input", () => {
+
+    if (searchInput.value.trim() === "") {
+        clearSearchButton.classList.add("d-none");
+    } else {
+        clearSearchButton.classList.remove("d-none");
+    }
+
+    clearTimeout(suggestionTimer);
+
+    suggestionTimer = setTimeout(() => {
+
+        loadSuggestions();
+
+    }, 300);
 
 });
 
+searchButton.addEventListener("click", searchLocation);
 
+searchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    searchLocation();
+  }
+});
 
+clearSearchButton.addEventListener("click", () => {
 
+    searchInput.value = "";
+    searchResults.innerHTML = "";
 
+    clearSearchButton.classList.add("d-none");
 
+    searchInput.focus();
 
+});
+
+// Clear suggestions when clicking outside the search container
+document.addEventListener("click", (event) => {
+
+    if (!document.getElementById("search-container").contains(event.target)) {
+
+        searchResults.innerHTML = "";
+
+    }
+
+});
