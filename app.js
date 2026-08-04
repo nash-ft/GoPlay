@@ -272,7 +272,45 @@ app.get('/members', sessionValidation, async (req, res) => {
 
 app.get('/map', (req, res) => {
     res.render('pages/map')
-})
+});
+
+app.get("/api/search", async (req, res) => {
+
+    const query = req.query.q;
+
+    if (!query) {
+        return res.status(400).json({ error: "Missing search query." });
+    }
+
+    try {
+
+        const response = await axios.get(
+            "https://nominatim.openstreetmap.org/search",
+            {
+                params: {
+                    q: query,
+                    format: "json",
+                    limit: 5,
+                    addressdetails: 1
+                },
+                headers: {
+                    "User-Agent": "GoPlay/1.0"
+                }
+            }
+        );
+
+        res.json(response.data);
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({ error: "Search failed." });
+
+    }
+
+});
 
 app.get('/logout', (req, res) => {
 
