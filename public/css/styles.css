@@ -317,34 +317,7 @@ body {
 
 }
 
-/* #filter-buttons{
-    position: absolute;
-    top: 85px;
-    left: 50%;
-    transform: translate(-50%);
-
-    z-index: 5;
-
-    display: flex;
-    gap: 10px;
-
-    /* padding: 10px; */
-
-/* border-radius: 18px; */
-
-/* background: rgba(255,255,255,.5);
-    backdrop-filter: blur(8px);
-
-    box-shadow: 0 4px 15px rgba(0,0,0,.15); */
-
-/* width: max-content;
-    max-width: calc(100% - 95px);
-
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none; */
-/* } */
-*/ #filter-buttons::-webkit-scrollbar {
+ #filter-buttons::-webkit-scrollbar {
     display: none;
 }
 
@@ -388,4 +361,9 @@ button {
 
 .btn-primary:hover {
     background-color: #6b7280;
+}
+
+/* SAVED */
+.card-footer {
+    background-color: #192433;
 }

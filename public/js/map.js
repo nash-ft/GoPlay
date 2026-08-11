@@ -160,8 +160,15 @@ function addSportsFacilityMarker(facility) {
                     Directions
                 </button>
 
-                <button class="btn btn-outline-success btn-sm save-btn"
-                    data-id="${facility.id}">
+                <button 
+                    class="btn btn-outline-success btn-sm save-btn"
+                    data-id="${facility.id}"
+                    data-name="${name}"
+                    data-sport="${facilityType}"
+                    data-access="${access}"
+                    data-lat="${lat}"
+                    data-lng="${lng}">
+                    <i class="bi bi-bookmark"></i>
                     Save
                 </button>
             </div>
@@ -383,6 +390,68 @@ document.addEventListener("click", (event) => {
     if (!document.getElementById("search-container").contains(event.target)) {
 
         searchResults.innerHTML = "";
+
+    }
+
+});
+
+document.addEventListener("click", async (event) => {
+
+    const button = event.target.closest(".save-btn");
+
+    if (!button) return;
+
+    try {
+
+        const response = await fetch("/api/favourites", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                facilityId: button.dataset.id,
+                name: button.dataset.name,
+                sport: button.dataset.sport,
+                lat: button.dataset.lat,
+                lng: button.dataset.lng,
+                access: button.dataset.access
+
+            })
+
+        });
+
+        if(response.status === 409){
+
+            button.innerHTML =
+                `<i class="bi bi-bookmark-fill"></i> Already Saved`;
+
+            button.classList.remove("btn-outline-success");
+            button.classList.add("btn-success");
+
+            button.disabled = true;
+
+
+            return;
+        }
+
+        if(response.ok){
+
+            button.innerHTML =
+                `<i class="bi bi-bookmark-fill"></i> Saved`;
+
+            button.classList.remove("btn-outline-success");
+            button.classList.add("btn-success");
+
+        }
+
+    }
+    catch(error){
+
+        console.error(error);
 
     }
 
