@@ -1,16 +1,15 @@
-require('dotenv').config(); 
-const express = require('express');
-const session = require('express-session');
-const {MongoStore} = require('connect-mongo');
-const axios = require('axios');
-const bcrypt = require('bcrypt');
+require("dotenv").config();
+const express = require("express");
+const session = require("express-session");
+const { MongoStore } = require("connect-mongo");
+const axios = require("axios");
+const bcrypt = require("bcrypt");
 const saltRounds = 12;
-
 
 const app = express();
 
 const Joi = require("joi");
-const mongoSanitizer = require('mongo-sanitizer').default;
+const mongoSanitizer = require("mongo-sanitizer").default;
 
 const port = process.env.PORT || 3000;
 const expireTime = 1 * 60 * 60 * 1000; // 1 hour
@@ -26,62 +25,64 @@ const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 /* END secret section */
 
-const client = require('./databaseConnection');
-const userCollection = client.db(mongodb_user_database).collection('users');
+const client = require("./databaseConnection");
+const userCollection = client.db(mongodb_user_database).collection("users");
+const favouritesCollection = client
+  .db(mongodb_user_database)
+  .collection("favourites");
 
-app.set('view engine', 'ejs');
-app.use(express.urlencoded({extended: false}));
+app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.use(mongoSanitizer(
-    { replaceWith: '_'}
-));
+app.use(mongoSanitizer({ replaceWith: "_" }));
 
 // Set up MongoDB session store
 const mongoStore = MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    dbName: mongodb_session_database,
-    crypto: {
-        secret: mongodb_session_secret
-    }
+  mongoUrl: process.env.MONGODB_URI,
+  dbName: mongodb_session_database,
+  crypto: {
+    secret: mongodb_session_secret,
+  },
 });
 
 // Set up session middleware
-app.use(session({ 
+app.use(
+  session({
     secret: node_session_secret,
-	store: mongoStore, //default is memory store 
-	saveUninitialized: false, 
-	resave: false,
+    store: mongoStore, //default is memory store
+    saveUninitialized: false,
+    resave: false,
     cookie: {
-        maxAge: expireTime
-    }
-}));
+      maxAge: expireTime,
+    },
+  }),
+);
 
 app.use((req, res, next) => {
-    res.locals.authenticated = req.session.authenticated;
-    res.locals.user_type = req.session.user_type;
-    res.locals.name = req.session.name;
-    next();
+  res.locals.authenticated = req.session.authenticated;
+  res.locals.user_type = req.session.user_type;
+  res.locals.name = req.session.name;
+  next();
 });
 
 function isValidSession(req) {
-    if (req.session.authenticated) {
-        return true;
-    }
-    return false;
+  if (req.session.authenticated) {
+    return true;
+  }
+  return false;
 }
 
-function sessionValidation(req,res,next) {
-    if (isValidSession(req)) {
-        next();
-    }
-    else {
-        res.redirect('/login');
-    }
+function sessionValidation(req, res, next) {
+  if (isValidSession(req)) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
 }
 
-app.get('/nosql-injection', (req,res) => {
-    res.send(`
+app.get("/nosql-injection", (req, res) => {
+  res.send(`
         noSQL injection example:
         <form action='/nosql-injection' method='post'>
             <input name='user' type='text' placeholder='user'>
@@ -102,190 +103,282 @@ app.get('/nosql-injection', (req,res) => {
             <em>(NoSQL injection attack)</em> <br>
             <img src="PostmanSS.png"/>
         </div>
-        `)
+        `);
 });
 
-app.post('/nosql-injection', async (req,res) => {
-	var username = req.body.user;
+app.post("/nosql-injection", async (req, res) => {
+  var username = req.body.user;
 
-	if (!username) {
-		res.send(`<h3>no user provided - try /nosql-injection?user=name</h3> <h3>or /nosql-injection?user[$ne]=name</h3>`);
-		return;
-	}
-	console.log("user: "+username);
+  if (!username) {
+    res.send(
+      `<h3>no user provided - try /nosql-injection?user=name</h3> <h3>or /nosql-injection?user[$ne]=name</h3>`,
+    );
+    return;
+  }
+  console.log("user: " + username);
 
-	const schema = Joi.string().max(20).required();
-	const validationResult = schema.validate(username);
+  const schema = Joi.string().max(20).required();
+  const validationResult = schema.validate(username);
 
-	//If we didn't use Joi to validate and check for a valid URL parameter below
-	// we could run our userCollection.find and it would be possible to attack.
-	// A URL parameter of user[$ne]=name would get executed as a MongoDB command
-	// and may result in revealing information about all users or a successful
-	// login without knowing the correct password.
-	if (validationResult.error != null) {  
-        console.log(validationResult.error);
-        res.send("<h1 style='color:darkred;'>A NoSQL injection attack was detected!!</h1>");
-        return;
-	}	
+  //If we didn't use Joi to validate and check for a valid URL parameter below
+  // we could run our userCollection.find and it would be possible to attack.
+  // A URL parameter of user[$ne]=name would get executed as a MongoDB command
+  // and may result in revealing information about all users or a successful
+  // login without knowing the correct password.
+  if (validationResult.error != null) {
+    console.log(validationResult.error);
+    res.send(
+      "<h1 style='color:darkred;'>A NoSQL injection attack was detected!!</h1>",
+    );
+    return;
+  }
 
-	const result = await userCollection.find({username: username}).project({username: 1, password: 1, _id: 1}).toArray();
+  const result = await userCollection
+    .find({ username: username })
+    .project({ username: 1, password: 1, _id: 1 })
+    .toArray();
 
-	console.log(result);
+  console.log(result);
 
-    res.send(`<h1>Hello ${username}</h1>`);
+  res.send(`<h1>Hello ${username}</h1>`);
 });
 
 const signupSchema = Joi.object({
-    username: Joi.string().max(50).required(),
-    email: Joi.string().email().required(),
-    password: Joi.string().max(50).required()
+  username: Joi.string().max(50).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().max(50).required(),
 });
 
 const loginSchema = Joi.object({
-    username: Joi.string().required(),
-    password: Joi.string().max(50).required()
+  username: Joi.string().required(),
+  password: Joi.string().max(50).required(),
 });
 
 // Routes
-app.get('/', (req, res) => {
-  res.render('pages/index');
+app.get("/", (req, res) => {
+  res.render("pages/index");
 });
 
-app.get('/signup', (req, res) => {
-    res.render('pages/signup', {
-        error: null
-    });
+app.get("/signup", (req, res) => {
+  res.render("pages/signup", {
+    error: null,
+  });
 });
 
-app.post('/signup', async (req, res) => {
+app.post("/signup", async (req, res) => {
+  const validation = signupSchema.validate(req.body);
 
-    const validation = signupSchema.validate(req.body);
-
-    if (validation.error) {
-        return res.render('pages/signup', {
-            error: validation.error.details[0].message
-        });
-    }
-
-    const { username, email, password } = req.body;
-
-    const existingUser = await userCollection.findOne({ 
-        $or: [
-            {username},
-            {email}
-        ]
+  if (validation.error) {
+    return res.render("pages/signup", {
+      error: validation.error.details[0].message,
     });
+  }
 
-if (existingUser) {
-    return res.render('pages/signup', {
-        error: 'Username or email already exists.'
+  const { username, email, password } = req.body;
+
+  const existingUser = await userCollection.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (existingUser) {
+    return res.render("pages/signup", {
+      error: "Username or email already exists.",
     });
-}
+  }
 
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    await userCollection.insertOne({
-        username,
-        email,
-        password: hashedPassword,
-        user_type: 'user'
-    });
+  const result = await userCollection.insertOne({
+    username,
+    email,
+    password: hashedPassword,
+    user_type: "user",
+  });
 
-    req.session.authenticated = true;
-    req.session.name = username;
-    req.session.user_type = 'user';
+  req.session.authenticated = true;
+  req.session.userId = result.insertedId;
+  req.session.name = username;
+  req.session.user_type = "user";
 
-    res.redirect('/members');
+  res.redirect("/members");
 });
 
-app.get('/login', (req, res) => {
-    res.render('pages/login', {
-        error: null
+app.get("/login", (req, res) => {
+  res.render("pages/login", {
+    error: null,
+  });
+});
+
+app.post("/login", async (req, res) => {
+  const validation = loginSchema.validate(req.body);
+
+  if (validation.error) {
+    return res.render("pages/login", {
+      error: validation.error.details[0].message,
     });
-});
+  }
 
-app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
 
-    const validation = loginSchema.validate(req.body);
+  const user = await userCollection.findOne({ username });
 
-    if (validation.error) {
-        return res.render('pages/login', {
-            error: validation.error.details[0].message
-        });
-    }
-
-    const { username, password } = req.body;
-
-    const user = await userCollection.findOne({ username });
-
-    if (!user) {
-        return res.render('pages/login', {
-            error: 'Invalid username or password.'
-        });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if (!validPassword) {
-        return res.render('pages/login', {
-            error: 'Invalid username or password.'
-        });
-    }
-
-    req.session.authenticated = true;
-    req.session.name = user.username;
-    req.session.user_type = user.user_type;
-
-    res.redirect('/members');
-});
-
-app.get('/members', sessionValidation, async (req, res) => {
-
-    let articles = [];
-
-    try {
-        const response = await axios.get(
-            `https://newsapi.org/v2/top-headlines`,
-            {
-                params: {
-                    category: 'sports',
-                    country: 'us',
-                    pageSize: 6,
-                    apiKey: process.env.NEWS_API_KEY
-                }
-            }
-        );
-
-        articles = response.data.articles;
-    }
-    catch (err) {
-        console.error(err);
-    }
-
-    res.render('pages/members', {
-        authenticated: req.session.authenticated,
-        user_type: req.session.user_type,
-        name: req.session.name,
-        articles
+  if (!user) {
+    return res.render("pages/login", {
+      error: "Invalid username or password.",
     });
+  }
+
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    return res.render("pages/login", {
+      error: "Invalid username or password.",
+    });
+  }
+
+  req.session.authenticated = true;
+  req.session.userId = user._id;
+  req.session.name = user.username;
+  req.session.user_type = user.user_type;
+
+  res.redirect("/members");
 });
 
-app.get('/map', (req, res) => {
-    res.render('pages/map')
-})
+app.get("/members", sessionValidation, async (req, res) => {
+  let articles = [];
 
-app.get('/logout', (req, res) => {
+  try {
+    const response = await axios.get(`https://newsapi.org/v2/top-headlines`, {
+      params: {
+        category: "sports",
+        country: "us",
+        pageSize: 6,
+        apiKey: process.env.NEWS_API_KEY,
+      },
+    });
 
-    req.session.destroy();
+    articles = response.data.articles;
+  } catch (err) {
+    console.error(err);
+  }
 
-    res.redirect('/');
+  res.render("pages/members", {
+    authenticated: req.session.authenticated,
+    user_type: req.session.user_type,
+    name: req.session.name,
+    articles,
+  });
+});
+
+app.get("/map", (req, res) => {
+  res.render("pages/map");
+});
+
+// Saved page route
+app.get("/saved", sessionValidation, async (req, res) => {
+
+    const favourites = await favouritesCollection
+        .find({
+            userId: req.session.userId
+        })
+        .sort({ createdAt: -1 })
+        .toArray();
+
+    res.render("pages/saved", {
+        favourites
+    });
+
+});
+
+app.get("/api/search", async (req, res) => {
+  const query = req.query.q;
+
+  if (!query) {
+    return res.status(400).json({ error: "Missing search query." });
+  }
+
+  try {
+    const response = await axios.get(
+      "https://nominatim.openstreetmap.org/search",
+      {
+        params: {
+          q: query,
+          format: "json",
+          limit: 5,
+          addressdetails: 1,
+        },
+        headers: {
+          "User-Agent": "GoPlay/1.0",
+        },
+      },
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({ error: "Search failed." });
+  }
+});
+
+// Save favourite
+app.post("/api/favourites", sessionValidation, async (req, res) => {
+  try {
+    const favourite = req.body;
+
+    favourite.userId = req.session.userId;
+    favourite.createdAt = new Date();
+
+    const existing = await favouritesCollection.findOne({
+      userId: favourite.userId,
+      facilityId: favourite.facilityId,
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        message: "Already saved.",
+      });
+    }
+
+    await favouritesCollection.insertOne(favourite);
+
+    res.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Unable to save favourite.",
+    });
+  }
+});
+
+// Delete favourite
+app.delete("/api/favourites/:facilityId", sessionValidation, async (req, res) => {
+
+    await favouritesCollection.deleteOne({
+
+        userId: req.session.userId,
+        facilityId: req.params.facilityId
+
+    });
+
+    res.json({ success: true });
+
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy();
+
+  res.redirect("/");
 });
 
 app.use(express.static(__dirname + "/public"));
 
-app.use((req,res) => {
-	res.status(404);
-	res.render('pages/404');
+app.use((req, res) => {
+  res.status(404);
+  res.render("pages/404");
 });
 
 app.listen(port, () => {

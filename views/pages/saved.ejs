@@ -1,0 +1,78 @@
+<%- include('../templates/header') %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <h2 class="mb-4" style="color: white;">
+        <i class="bi bi-bookmark-fill"></i>
+        Saved Facilities
+    </h2>
+
+    <% if (favourites.length === 0) { %>
+
+        <div class="alert alert-secondary" role="alert">
+            You haven't saved any facilities yet.
+        </div>
+
+    <% } %>
+
+    <div class="row g-4">
+
+        <% favourites.forEach(facility => { %>
+
+            <div class="col-lg-4 col-md-6">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body">
+
+                        <h5 class="card-title">
+                            <%= facility.name %>
+                        </h5>
+
+                        <p class="card-text">
+
+                            <strong>Sport:</strong>
+                            <%= facility.sport %>
+
+                            <br>
+
+                            <strong>Access:</strong>
+                            <%= facility.access %>
+
+                        </p>
+
+                    </div>
+
+                    <div class="card-footer">
+
+                        <a
+                            href="/map?lat=<%= facility.lat %>&lng=<%= facility.lng %>"
+                            class="btn btn-primary btn-sm">
+
+                            View on Map
+
+                        </a>
+
+                        <button
+                            class="bi bi-trash-fill btn btn-outline-danger btn-sm remove-btn"
+                            data-id="<%= facility.facilityId %>">
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        <% }) %>
+
+    </div>
+
+</div>
+
+<script src="/js/saved.js"></script>
+
+<%- include('../templates/footer') %>
