@@ -456,3 +456,27 @@ document.addEventListener("click", async (event) => {
     }
 
 });
+
+// Google Directions
+document.addEventListener("click", (event) => {
+
+    const button = event.target.closest(".directions-btn");
+
+    if (!button) return;
+
+    if (!userLocation) {
+        alert("Your location is not available.");
+        return;
+    }
+
+    const destinationLat = button.dataset.lat;
+    const destinationLng = button.dataset.lng;
+
+    const url =
+        `https://www.google.com/maps/dir/?api=1` +
+        `&origin=${userLocation.lat},${userLocation.lng}` +
+        `&destination=${destinationLat},${destinationLng}`;
+
+    window.open(url, "_blank");
+
+});
