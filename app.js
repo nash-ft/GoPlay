@@ -43,6 +43,10 @@ const repliesCollection = client
   .db(mongodb_user_database)
   .collection("replies");
 
+  const likesCollection = client
+    .db(mongodb_user_database)
+    .collection("likes");
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -312,10 +316,11 @@ app.get("/members", sessionValidation, async (req, res) => {
   let articles = [];
 
   try {
-    const response = await axios.get(`https://newsapi.org/v2/top-headlines`, {
+    const response = await axios.get(`https://newsapi.org/v2/everything`, {
       params: {
-        category: "sports",
-        country: "us",
+        q: "sports",
+        language: "en",
+        sortBy: "publishedAt",
         pageSize: 6,
         apiKey: process.env.NEWS_API_KEY,
       },
@@ -561,9 +566,7 @@ app.post("/discuss/:sport/new", sessionValidation, async (req, res) => {
 
         createdAt: new Date(),
 
-        replyCount: 0,
-
-        likeCount: 0
+        replyCount: 0
 
     };
 
@@ -593,6 +596,19 @@ app.get("/discussion/:id", sessionValidation, async (req, res) => {
                 createdAt: 1
             })
             .toArray();
+        
+        for (const reply of replies) {
+
+          reply.likeCount = await likesCollection.countDocuments({
+            replyId: reply._id
+          });
+
+          reply.userLiked = await likesCollection.findOne({
+            replyId: reply._id,
+            userId: req.session.userId
+          }) !== null;
+
+        }    
 
         res.render("pages/discussion", {
 
@@ -812,6 +828,40 @@ app.post("/reply/:id/delete", sessionValidation, async (req, res) => {
             }
         }
     );
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
+app.post("/reply/:id/like", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    const existingLike = await likesCollection.findOne({
+        replyId: reply._id,
+        userId: req.session.userId
+    });
+
+    if (existingLike) {
+
+        await likesCollection.deleteOne({
+            _id: existingLike._id
+        });
+
+    } else {
+
+        await likesCollection.insertOne({
+            replyId: reply._id,
+            userId: req.session.userId,
+            createdAt: new Date()
+        });
+
+    }
 
     res.redirect(`/discussion/${reply.discussionId}`);
 });
