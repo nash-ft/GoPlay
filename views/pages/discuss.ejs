@@ -1,0 +1,42 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+    <h2 class="display-5">Sports Discussions</h2>
+
+    <p class="lead">
+        Join the conversation or start your own discussion.
+    </p>
+
+    <div class="row g-4 mt-4">
+
+        <% sports.forEach(sport => { %>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
+
+            <a href="/discuss/<%= sport.name.toLowerCase() %>" class="text-decoration-none">
+
+                <div class="card page-buttons h-100 shadow-sm text-center">
+
+                    <div class="card-body">
+
+                        <h3><%= sport.icon %> <%= sport.name %></h3>
+
+                        <p><%= sport.description %></p>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+</div>
+
+<% }) %>
+
+    </div>
+
+</div>
+
+<%- include("../templates/footer") %>

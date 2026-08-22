@@ -1,0 +1,80 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h1 class="display-5">
+                <%= sport.icon %> <%= sport.name %>
+            </h1>
+
+            <p>
+                Join discussions about <%= sport.name.toLowerCase() %>.
+            </p>
+
+        </div>
+
+        <a
+            href="/discuss/<%= sport.slug %>/new"
+            class="btn btn-primary">
+
+            + Create Discussion
+
+        </a>
+
+    </div>
+
+    <% if (discussions.length === 0) { %>
+
+        <div class="alert alert-secondary">
+
+            No discussions yet.
+            Be the first to start one!
+
+        </div>
+
+    <% } %>
+
+    <% discussions.forEach(discussion => { %>
+
+        <a
+            href="/discussion/<%= discussion._id %>"
+            class="text-decoration-none text-dark">
+
+            <div class="card mb-3 shadow-sm">
+
+                <div class="card-body">
+
+                    <h4><%= discussion.title %></h4>
+
+                    <p class="text-muted mb-2">
+
+                        <%= discussion.description %>
+
+                    </p>
+
+                    <small>
+
+                        By <strong><%= discussion.authorName %></strong>
+
+                        •
+
+                        <%= discussion.replyCount %> replies
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </a>
+
+    <% }) %>
+
+</div>
+
+<%- include("../templates/footer") %>
