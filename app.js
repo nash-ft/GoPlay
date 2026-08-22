@@ -726,6 +726,96 @@ app.post("/discussion/:id/reply", sessionValidation, async (req, res) => {
 
 });
 
+app.get("/reply/:id/edit", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can edit
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    res.render("pages/editReply", {
+        reply,
+        error: null
+    });
+
+});
+
+app.post("/reply/:id/edit", sessionValidation, async (req, res) => {
+
+    const validation = replySchema.validate(req.body);
+
+    if (validation.error) {
+        return res.status(400).send(
+            validation.error.details[0].message
+        );
+    }
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can edit
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await repliesCollection.updateOne(
+        { _id: reply._id },
+        {
+            $set: {
+                message: req.body.message,
+                editedAt: new Date()
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
+app.post("/reply/:id/delete", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can delete
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await repliesCollection.deleteOne({
+        _id: reply._id
+    });
+
+    // Decrease the discussion's reply count
+    await discussionsCollection.updateOne(
+        { _id: reply.discussionId },
+        {
+            $inc: {
+                replyCount: -1
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
 app.post("/discussion/:id/delete", sessionValidation, async (req, res) => {
 
     const discussion = await discussionsCollection.findOne({

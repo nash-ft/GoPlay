@@ -86,16 +86,50 @@
 
                     <strong><%= reply.authorName %></strong>
 
-                    <small class="text-muted">
+                    <small>
 
                         •
                         <%= reply.createdAt.toLocaleDateString() %>
+
+                        <% if (reply.editedAt) { %>
+
+                           • Edited
+                           
+                        <% } %>
 
                     </small>
 
                     <hr>
 
                     <p><%= reply.message %></p>
+
+                    <% if (reply.authorId.toString() === userId.toString()) { %>
+
+                        <a
+                            href="/reply/<%= reply._id %>/edit"
+                            class="btn btn-warning btn-sm">
+
+                            Edit
+
+                        </a>
+
+                        <form
+                            action="/reply/<%= reply._id %>/delete"
+                            method="POST"
+                            class="d-inline">
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger btn-sm"
+                                onclick="return confirm('Delete this reply?');">
+
+                                Delete
+
+                            </button>
+
+                        </form>
+
+                    <% } %>
 
                 </div>
 

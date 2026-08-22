@@ -1,0 +1,68 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <h1 class="display-6">
+                Edit Reply
+            </h1>
+
+            <% if (error) { %>
+
+                <div class="alert alert-danger">
+                    <%= error %>
+                </div>
+
+            <% } %>
+
+            <form
+                action="/reply/<%= reply._id %>/edit"
+                method="POST">
+
+                <div class="mb-3">
+
+                    <label for="message" class="form-label">
+                        Reply
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="message"
+                        name="message"
+                        rows="5"
+                        maxlength="1000"
+                        required
+                    ><%= reply.message %></textarea>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+
+                    Save Changes
+
+                </button>
+
+                <a
+                    href="/discussion/<%= reply.discussionId %>"
+                    class="btn btn-secondary">
+
+                    Cancel
+
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include("../templates/footer") %>
