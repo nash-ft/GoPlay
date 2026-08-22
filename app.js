@@ -597,7 +597,8 @@ app.get("/discussion/:id", sessionValidation, async (req, res) => {
         res.render("pages/discussion", {
 
             discussion,
-            replies
+            replies,
+            userId: req.session.userId
 
         });
 
@@ -611,6 +612,65 @@ app.get("/discussion/:id", sessionValidation, async (req, res) => {
     }
 
 });
+
+app.get("/discussion/:id/edit", sessionValidation, async (req, res) => {
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can edit
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    res.render("pages/editDiscussion", {
+        discussion,
+        error: null
+    });
+
+});
+
+app.post("/discussion/:id/edit", sessionValidation, async (req, res) => {
+
+    const validation = discussionSchema.validate(req.body);
+
+    if (validation.error) {
+        return res.status(400).send(
+            validation.error.details[0].message
+        );
+    }
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can edit
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await discussionsCollection.updateOne(
+        { _id: discussion._id },
+        {
+            $set: {
+                title: req.body.title,
+                description: req.body.description
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${discussion._id}`);
+});
+
 
 app.post("/discussion/:id/reply", sessionValidation, async (req, res) => {
 
@@ -664,6 +724,34 @@ app.post("/discussion/:id/reply", sessionValidation, async (req, res) => {
 
     res.redirect(`/discussion/${discussion._id}`);
 
+});
+
+app.post("/discussion/:id/delete", sessionValidation, async (req, res) => {
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can delete
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    // Delete all replies
+    await repliesCollection.deleteMany({
+        discussionId: discussion._id
+    });
+
+    // Delete discussion
+    await discussionsCollection.deleteOne({
+        _id: discussion._id
+    });
+
+    res.redirect(`/discuss/${discussion.sport}`);
 });
 
 app.get("/logout", (req, res) => {

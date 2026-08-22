@@ -33,6 +33,34 @@
 
             </p>
 
+            <% if (discussion.authorId.toString() === userId.toString()) { %>
+
+                <a 
+                    href="/discussion/<%= discussion._id %>/edit"
+                    class="btn btn-warning btn-sm">
+
+                    Edit
+
+                </a>
+
+                <form
+                    action="/discussion/<%= discussion._id %>/delete"
+                    method="POST"
+                    class="d-inline">
+
+                    <button 
+                    type="submit"
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirm('Delete this discussion?');">
+
+                    Delete
+
+                    </button>
+
+                </form>
+
+            <% } %>
+
         </div>
 
     </div>
@@ -88,7 +116,7 @@
             class="form-control"
             name="message"
             rows="4"
-            max-length="1000"
+            maxlength="1000"
             placeholder="Write your reply..."
             required
         ></textarea>
