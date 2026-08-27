@@ -103,6 +103,38 @@
 
                     <p><%= reply.message %></p>
 
+                    <div class="mt-3 p-1">
+
+                        <form
+                            action="/reply/<%= reply._id %>/like"
+                            method="POST"
+                            class="d-inline">
+
+                            <button
+                                type="submit"
+                                class="btn btn-outline-primary btn-sm">
+
+                                <% if (reply.userLiked) { %>
+
+                                    👎
+
+                                <% } else { %>
+
+                                    👍
+                                
+                                <% } %>
+                                
+
+                            </button>
+
+                        </form>
+
+                        <span class="ms-2">
+                            <%= reply.likeCount %>
+                        </span>
+
+                    </div>
+
                     <% if (reply.authorId.toString() === userId.toString()) { %>
 
                         <a
