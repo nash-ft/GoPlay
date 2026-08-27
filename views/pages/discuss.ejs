@@ -11,31 +11,41 @@
 
     <div class="row g-4 mt-4">
 
-        <% sports.forEach(sport => { %>
+    <% sports.forEach(sport => { %>
 
-        <div class="col-lg-3 col-md-4 col-sm-6">
+    <div class="col-lg-4 col-md-6 col-sm-12">
 
-            <a href="/discuss/<%= sport.name.toLowerCase() %>" class="text-decoration-none">
+        <a href="/discuss/<%= sport.name.toLowerCase() %>" class="text-decoration-none">
 
-                <div class="card page-buttons h-100 shadow-sm text-center">
+            <div class="card page-buttons sport-card shadow-sm">
 
-                    <div class="card-body">
+                <img 
+                    src="<%= sport.image %>" 
+                    class="sport-card-image" 
+                    alt="<%= sport.name %>"
+                >
 
-                        <h3><%= sport.icon %> <%= sport.name %></h3>
+                <div class="sport-card-overlay"></div>
 
-                        <p><%= sport.description %></p>
+                <div class="sport-card-content">
+                    <h3>
+                         <%= sport.name %>
+                    </h3>
 
-                    </div>
-
+                    <p>
+                        <%= sport.description %>
+                    </p>
                 </div>
 
-            </a>
+            </div>
 
-</div>
-
-<% }) %>
+        </a>
 
     </div>
+
+    <% }) %>
+
+</div>
 
 </div>
 

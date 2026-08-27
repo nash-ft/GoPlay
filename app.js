@@ -443,42 +443,50 @@ app.get("/discuss", sessionValidation, (req, res) => {
     {
         name: "Soccer",
         icon: "⚽",
-        description: "Discuss football leagues, players, and matches."
+        description: "Discuss football leagues, players, and matches.",
+        image: "/images/sports/soccer.jpg"
     },
     {
         name: "Basketball",
         icon: "🏀",
-        description: "Talk about the NBA, EuroLeague, and more."
+        description: "Talk about the NBA, EuroLeague, and more.",
+        image: "/images/sports/basketball.jpg"
     },
     {
         name: "Tennis",
         icon: "🎾",
-        description: "Discuss ATP, WTA, Grand Slams, and players."
+        description: "Discuss ATP, WTA, Grand Slams, and players.",
+        image: "/images/sports/tennis.jpg"
     },
     {
         name: "Baseball",
         icon: "⚾",
-        description: "Share MLB news and baseball discussions."
+        description: "Share MLB news and baseball discussions.",
+        image: "/images/sports/baseball.jpg"
     },
     {
         name: "Volleyball",
         icon: "🏐",
-        description: "Talk indoor and beach volleyball."
+        description: "Talk indoor and beach volleyball.",
+        image: "/images/sports/volleyball.jpg"
     },
     {
         name: "Golf",
         icon: "⛳",
-        description: "Discuss courses, tournaments, and equipment."
+        description: "Discuss courses, tournaments, and equipment.",
+        image: "/images/sports/golf.jpg"
     },
     {
         name: "Swimming",
         icon: "🏊",
-        description: "Share swimming tips and competition news."
+        description: "Share swimming tips and competition news.",
+        image: "/images/sports/swim.jpg"
     },
     {
         name: "Running",
         icon: "🏃",
-        description: "Discuss races, training, and gear."
+        description: "Discuss races, training, and gear.",
+        image: "/images/sports/run.jpg"
     }
 ];
 
