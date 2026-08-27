@@ -4,7 +4,8 @@ const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
-const { ObjectId } = require("mongodb")
+const { ObjectId } = require("mongodb");
+const quizQuestions = require("./public/js/quiz");
 const saltRounds = 12;
 
 const app = express();
@@ -899,6 +900,80 @@ app.post("/discussion/:id/delete", sessionValidation, async (req, res) => {
     });
 
     res.redirect(`/discuss/${discussion.sport}`);
+});
+
+app.get("/quiz", sessionValidation, (req, res) => {
+
+    const shuffledQuestions = [...quizQuestions]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 10)
+        .map(question => ({
+            ...question,
+            options: [...question.options]
+                .sort(() => Math.random() - 0.5)
+        }));
+
+    // store questions in user's session
+    req.session.quizQuestions = shuffledQuestions;
+    req.session.quizAnswers = {};
+    req.session.currentQuestion = 0;
+
+    res.render("pages/quiz", {
+        question: shuffledQuestions[0],
+        questionNumber: 1,
+        totalQuestions: shuffledQuestions.length
+    });
+});
+
+app.post("/quiz/answer", sessionValidation, (req, res) => {
+
+    if (!req.session.quizQuestions) {
+        return res.redirect("/quiz");
+    }
+
+    const questions = req.session.quizQuestions;
+    const currentQuestion = req.session.currentQuestion;
+
+    const question = questions[currentQuestion];
+
+    const userAnswer = req.body.answer;
+
+    // Store the user's answer
+    req.session.quizAnswers[question.id] = userAnswer;
+
+    // Move to the next question
+    req.session.currentQuestion++;
+
+    // Check if quiz is finished
+    if (req.session.currentQuestion >= questions.length) {
+
+        let score = 0;
+
+        questions.forEach(question => {
+
+            const answer = req.session.quizAnswers[question.id];
+
+            if (answer === question.answer) {
+                score++;
+            }
+
+        });
+
+        return res.render("pages/quiz-results", {
+            score: score,
+            total: questions.length
+        });
+    }
+
+    // Show next question
+    const nextQuestion = questions[req.session.currentQuestion];
+
+    res.render("pages/quiz", {
+        question: nextQuestion,
+        questionNumber: req.session.currentQuestion + 1,
+        totalQuestions: questions.length
+    });
+
 });
 
 app.get("/logout", (req, res) => {

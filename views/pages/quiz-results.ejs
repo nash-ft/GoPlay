@@ -1,0 +1,75 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content quiz-results-container">
+
+    <div class="card shadow-sm text-center">
+
+        <div class="card-body p-5">
+
+            <h1 class="display-5">
+                Quiz Complete!
+            </h1>
+
+            <p class="lead mt-3">
+                You scored
+            </p>
+
+            <h2 class="display-3 fw-bold">
+                <%= score %>/<%= total %>
+            </h2>
+
+            <% if (score === total) { %>
+
+                <p class="text-success mt-3">
+                    Perfect score! You're a sports expert!
+                </p>
+
+            <% } else if (score >= 7) { %>
+
+                <p class="text-success mt-3">
+                    Great job! You really know your sports.
+                </p>
+
+            <% } else if (score >= 4) { %>
+
+                <p class="text-warning mt-3">
+                    Not bad! Keep practicing.
+                </p>
+
+            <% } else { %>
+
+                <p class="text-danger mt-3">
+                    Keep practicing and try again!
+                </p>
+
+            <% } %>
+
+            <div class="mt-4">
+
+                <a
+                    href="/quiz"
+                    class="btn btn-primary">
+
+                    Try Again
+
+                </a>
+
+                <a
+                    href="/members"
+                    class="btn btn-secondary ms-2">
+
+                    Back
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include("../templates/footer") %>
