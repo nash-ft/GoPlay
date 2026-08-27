@@ -60,6 +60,40 @@ body {
     font-size: 2.5rem;
 }
 
+/* auth links */
+.modern-nav-link {
+    color: #495057 !important;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.modern-nav-link:hover {
+    color: #7f7d7d !important;
+}
+
+.profile-link {
+    color: #495057 !important;
+    font-size: 1.5rem;
+    padding: 0 !important;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-link:hover {
+    color: #7f7d7d !important;
+    transform: scale(1.08);
+}
+
+.logout-link {
+    color: #dc3545 !important;
+    font-weight: 500;
+    padding: 0 !important;
+    transition: color 0.2s ease;
+}
+
+.logout-link:hover {
+    color: #b02a37 !important;
+}
+
 /* Signup card */
 .signup-card {
     background-color: #1f2937;

@@ -40,14 +40,40 @@
         </ul>
 
         <!-- Auth Buttons -->
-        <div class="ms-auto d-flex gap-2">
+        <div class="ms-auto d-flex align-items-center gap-3">
+
           <% if (!authenticated) { %>
-            <a class="btn btn-secondary buttons" href="/signup">Sign Up</a>
-            <a class="btn btn-secondary buttons" href="/login">Login</a>
+
+              <a class="nav-link modern-nav-link" href="/signup">
+                  Sign Up
+              </a>
+
+              <a class="nav-link modern-nav-link" href="/login">
+                  Login
+              </a>
+
           <% } else { %>
-            <a class="btn btn-secondary buttons" href="/profile">Profile</a>
-            <a class="btn btn-danger buttons" href="/logout">Logout</a>
+
+              <a
+                class="nav-link profile-link"
+                href="/profile"
+                title="Profile"
+                aria-label="Profile">
+
+                <i class="bi bi-person-circle"></i>
+
+              </a>
+
+              <a
+                class="nav-link logout-link"
+                href="/logout">
+
+                Logout
+
+              </a>
+
           <% } %>
+
         </div>
 
       </div>

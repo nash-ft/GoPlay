@@ -316,11 +316,10 @@ app.get("/members", sessionValidation, async (req, res) => {
   let articles = [];
 
   try {
-    const response = await axios.get(`https://newsapi.org/v2/everything`, {
+    const response = await axios.get(`https://newsapi.org/v2/top-headlines`, {
       params: {
-        q: "sports",
-        language: "en",
-        sortBy: "publishedAt",
+        category: "sports",
+        country: "us",
         pageSize: 6,
         apiKey: process.env.NEWS_API_KEY,
       },
