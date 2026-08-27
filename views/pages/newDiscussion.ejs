@@ -1,0 +1,105 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <div class="mb-4">
+
+        <h1 class="display-5">
+            <%= sport.icon %> New <%= sport.name %> Discussion
+        </h1>
+
+        <p>
+            Start a discussion with the <%= sport.name.toLowerCase() %> community.
+        </p>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <% if (typeof error !== "undefined" && error) { %>
+
+            <div class="alert alert-danger">
+                <%= error %>
+            </div>
+
+            <% } %>
+
+            <form
+                action="/discuss/<%= sport.slug %>/new"
+                method="POST">
+
+                <div class="mb-3">
+
+                    <label
+                        for="title"
+                        class="form-label">
+
+                        Discussion Title
+
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="title"
+                        name="title"
+                        maxlength="100"
+                        placeholder="e.g. Messi vs Ronaldo"
+                        required>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label
+                        for="description"
+                        class="form-label">
+
+                        Description
+
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="description"
+                        name="description"
+                        rows="6"
+                        maxlength="1000"
+                        placeholder="Write your discussion here..."
+                        required></textarea>
+
+                </div>
+
+                <div class="d-flex justify-content-between">
+
+                    <a
+                        href="/discuss/<%= sport.slug %>"
+                        class="btn btn-outline-secondary">
+
+                        Cancel
+
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Create Discussion
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+    
+</div>
+
+<%- include("../templates/footer") %>

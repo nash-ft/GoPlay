@@ -1,0 +1,205 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <div class="card discussion-card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <h1 class="display-6">
+
+                <%= discussion.title %>
+
+            </h1>
+
+            <p class="text-muted">
+
+                Posted by
+                <strong><%= discussion.authorName %></strong>
+
+                •
+
+                <%= discussion.createdAt.toLocaleDateString() %>
+
+            </p>
+
+            <hr>
+
+            <p>
+
+                <%= discussion.description %>
+
+            </p>
+
+            <% if (discussion.authorId.toString() === userId.toString()) { %>
+
+                <div class="mt-4 d-flex gap-2">
+
+                    <a
+                        href="/discussion/<%= discussion._id %>/edit"
+                        class="modern-btn edit-btn text-decoration-none">
+
+                            Edit
+
+                    </a>
+
+                    <form
+                        action="/discussion/<%= discussion._id %>/delete"
+                        method="POST"
+                        class="d-inline">
+
+                        <button
+                            type="submit"
+                            class="modern-btn delete-btn"
+                            onclick="return confirm('Delete this discussion?');">
+
+                                Delete
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            <% } %>
+
+        </div>
+
+    </div>
+
+    <h3>Replies</h3>
+
+    <% if (replies.length === 0) { %>
+
+        <div class="alert alert-secondary">
+
+            No replies yet.
+            Start the conversation!
+
+        </div>
+
+    <% } else { %>
+
+        <% replies.forEach(reply => { %>
+
+            <div class="card reply-card shadow-sm mb-3">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-start">
+
+                        <div>
+                            <strong><%= reply.authorName %></strong>
+
+                            <small class="">
+                                •
+                                <%= reply.createdAt.toLocaleDateString() %>
+
+                                <% if (reply.editedAt) { %>
+                                • Edited
+                                <% } %>
+                            </small>
+                        </div>
+
+                        <!-- Like button -->
+                        <form
+                            action="/reply/<%= reply._id %>/like"
+                            method="POST"
+                            class="d-inline">
+
+                            <button
+                                type="submit"
+                                class="like-btn"
+                                title="<%= reply.userLiked ? 'Unlike' : 'Like' %>">
+
+                                <% if (reply.userLiked) { %>
+                                    ❤️
+                                <% } else { %>
+                                    🤍
+                                <% } %>
+
+                            </button>
+
+                            <span class="like-count">
+                                <%= reply.likeCount %>
+                            </span>
+
+                        </form>
+
+                    </div>
+
+                    <hr>
+
+                    <p class="mb-3">
+                        <%= reply.message %>
+                    </p>
+
+                    <% if (reply.authorId.toString() === userId.toString()) { %>
+
+                        <div class="mt-4 d-flex gap-2">
+                        <a
+                            href="/reply/<%= reply._id %>/edit"
+                            class="modern-btn edit-btn text-decoration-none">
+
+                            Edit
+
+                        </a>
+
+                        <form
+                            action="/reply/<%= reply._id %>/delete"
+                            method="POST"
+                            class="d-inline">
+
+                            <button
+                                type="submit"
+                                class="modern-btn delete-btn"
+                                onclick="return confirm('Delete this reply?');">
+
+                                Delete
+
+                            </button>
+
+                        </form>
+                    </div>
+
+                    <% } %>
+
+                </div>
+
+            </div>
+
+        <% }) %>
+
+    <% } %>
+
+    <h3 class="mt-5">
+
+    Add Reply
+
+    </h3>
+
+    <form action="/discussion/<%= discussion._id %>/reply" method="POST">
+        <textarea
+            class="form-control"
+            name="message"
+            rows="4"
+            maxlength="1000"
+            placeholder="Write your reply..."
+            required
+        ></textarea>
+
+        <button
+        type="submit"
+        class="modern-btn reply-submit-btn mt-3">
+
+        Reply
+
+        </button>
+
+    </form>
+
+</div>
+
+<%- include("../templates/footer") %>

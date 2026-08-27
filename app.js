@@ -4,6 +4,8 @@ const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
+const { ObjectId } = require("mongodb");
+const quizQuestions = require("./public/js/quiz");
 const saltRounds = 12;
 
 const app = express();
@@ -26,10 +28,25 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 /* END secret section */
 
 const client = require("./databaseConnection");
+
+// Collections
 const userCollection = client.db(mongodb_user_database).collection("users");
+
 const favouritesCollection = client
   .db(mongodb_user_database)
   .collection("favourites");
+
+const discussionsCollection = client
+  .db(mongodb_user_database)
+  .collection("discussions");
+
+const repliesCollection = client
+  .db(mongodb_user_database)
+  .collection("replies");
+
+  const likesCollection = client
+    .db(mongodb_user_database)
+    .collection("likes");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
@@ -79,6 +96,40 @@ function sessionValidation(req, res, next) {
   } else {
     res.redirect("/login");
   }
+}
+
+function getSportIcon(sport) {
+
+    switch (sport.toLowerCase()) {
+
+        case "soccer":
+            return "⚽";
+
+        case "basketball":
+            return "🏀";
+
+        case "tennis":
+            return "🎾";
+
+        case "baseball":
+            return "⚾";
+
+        case "volleyball":
+            return "🏐";
+
+        case "golf":
+            return "⛳";
+
+        case "swimming":
+            return "🏊";
+
+        case "running":
+            return "🏃";
+
+        default:
+            return "🏅";
+    }
+
 }
 
 app.get("/nosql-injection", (req, res) => {
@@ -152,6 +203,24 @@ const signupSchema = Joi.object({
 const loginSchema = Joi.object({
   username: Joi.string().required(),
   password: Joi.string().max(50).required(),
+});
+
+const discussionSchema = Joi.object({
+    title: Joi.string()
+        .max(100)
+        .required(),
+
+    description: Joi.string()
+        .max(1000)
+        .required()
+});
+
+const replySchema = Joi.object({
+
+    message: Joi.string()
+        .max(1000)
+        .required()
+
 });
 
 // Routes
@@ -365,6 +434,545 @@ app.delete("/api/favourites/:facilityId", sessionValidation, async (req, res) =>
     });
 
     res.json({ success: true });
+
+});
+
+app.get("/discuss", sessionValidation, (req, res) => {
+
+    const sports = [
+    {
+        name: "Soccer",
+        icon: "⚽",
+        description: "Discuss football leagues, players, and matches.",
+        image: "/images/sports/soccer.jpg"
+    },
+    {
+        name: "Basketball",
+        icon: "🏀",
+        description: "Talk about the NBA, EuroLeague, and more.",
+        image: "/images/sports/basketball.jpg"
+    },
+    {
+        name: "Tennis",
+        icon: "🎾",
+        description: "Discuss ATP, WTA, Grand Slams, and players.",
+        image: "/images/sports/tennis.jpg"
+    },
+    {
+        name: "Baseball",
+        icon: "⚾",
+        description: "Share MLB news and baseball discussions.",
+        image: "/images/sports/baseball.jpg"
+    },
+    {
+        name: "Volleyball",
+        icon: "🏐",
+        description: "Talk indoor and beach volleyball.",
+        image: "/images/sports/volleyball.jpg"
+    },
+    {
+        name: "Golf",
+        icon: "⛳",
+        description: "Discuss courses, tournaments, and equipment.",
+        image: "/images/sports/golf.jpg"
+    },
+    {
+        name: "Swimming",
+        icon: "🏊",
+        description: "Share swimming tips and competition news.",
+        image: "/images/sports/swim.jpg"
+    },
+    {
+        name: "Running",
+        icon: "🏃",
+        description: "Discuss races, training, and gear.",
+        image: "/images/sports/run.jpg"
+    }
+];
+
+    res.render("pages/discuss", {
+        sports
+    });
+
+});
+
+app.get("/discuss/:sport", sessionValidation, async (req, res) => {
+
+    const sport = {
+        slug: req.params.sport,
+        name:
+            req.params.sport.charAt(0).toUpperCase() +
+            req.params.sport.slice(1),
+        icon: getSportIcon(req.params.sport)
+    };
+
+    const discussions = await discussionsCollection
+        .find({
+            sport: req.params.sport
+        })
+        .sort({
+            createdAt: -1
+        })
+        .toArray();
+
+    res.render("pages/sport", {
+
+        sport,
+        discussions
+
+    });
+
+});
+
+app.get("/discuss/:sport/new", sessionValidation, (req, res) => {
+
+    const sport = {
+        slug: req.params.sport,
+        name:
+            req.params.sport.charAt(0).toUpperCase() +
+            req.params.sport.slice(1),
+        icon: getSportIcon(req.params.sport)
+    };
+
+    res.render("pages/newDiscussion", {
+        sport,
+        error: null
+    });
+
+});
+
+app.post("/discuss/:sport/new", sessionValidation, async (req, res) => {
+
+    const validation = discussionSchema.validate(req.body);
+
+    if (validation.error) {
+
+        return res.render("pages/newDiscussion", {
+            sport: {
+                slug: req.params.sport,
+                name:
+                    req.params.sport.charAt(0).toUpperCase() +
+                    req.params.sport.slice(1),
+                icon: getSportIcon(req.params.sport)
+            },
+            error: validation.error.details[0].message
+        });
+
+    }
+
+    const discussion = {
+
+        sport: req.params.sport,
+
+        title: req.body.title,
+
+        description: req.body.description,
+
+        authorId: req.session.userId,
+
+        authorName: req.session.name,
+
+        createdAt: new Date(),
+
+        replyCount: 0
+
+    };
+
+    await discussionsCollection.insertOne(discussion);
+
+    res.redirect(`/discuss/${req.params.sport}`);
+
+});
+
+app.get("/discussion/:id", sessionValidation, async (req, res) => {
+
+    try {
+
+        const discussion = await discussionsCollection.findOne({
+
+            _id: new ObjectId(req.params.id)
+
+        });
+
+        const replies = await repliesCollection
+            .find({
+
+                discussionId: discussion._id
+            })
+            .sort({
+
+                createdAt: 1
+            })
+            .toArray();
+        
+        for (const reply of replies) {
+
+          reply.likeCount = await likesCollection.countDocuments({
+            replyId: reply._id
+          });
+
+          reply.userLiked = await likesCollection.findOne({
+            replyId: reply._id,
+            userId: req.session.userId
+          }) !== null;
+
+        }    
+
+        res.render("pages/discussion", {
+
+            discussion,
+            replies,
+            userId: req.session.userId
+
+        });
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.get("/discussion/:id/edit", sessionValidation, async (req, res) => {
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can edit
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    res.render("pages/editDiscussion", {
+        discussion,
+        error: null
+    });
+
+});
+
+app.post("/discussion/:id/edit", sessionValidation, async (req, res) => {
+
+    const validation = discussionSchema.validate(req.body);
+
+    if (validation.error) {
+        return res.status(400).send(
+            validation.error.details[0].message
+        );
+    }
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can edit
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await discussionsCollection.updateOne(
+        { _id: discussion._id },
+        {
+            $set: {
+                title: req.body.title,
+                description: req.body.description
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${discussion._id}`);
+});
+
+
+app.post("/discussion/:id/reply", sessionValidation, async (req, res) => {
+
+    const validation = replySchema.validate(req.body);
+
+    if (validation.error) {
+
+        return res.status(400).send(validation.error.details[0].message);
+
+    }
+
+    const discussion = await discussionsCollection.findOne({
+
+        _id: new ObjectId(req.params.id)
+
+    });
+
+    if (!discussion) {
+
+        return res.status(404).send("Discussion not found.");
+
+    }
+
+    const reply = {
+
+        discussionId: discussion._id,
+
+        authorId: req.session.userId,
+
+        authorName: req.session.name,
+
+        message: req.body.message,
+
+        createdAt: new Date()
+
+    };
+
+    await repliesCollection.insertOne(reply);
+
+    await discussionsCollection.updateOne(
+
+        { _id: discussion._id },
+
+        {
+            $inc: {
+                replyCount: 1
+            }
+        }
+
+    );
+
+    res.redirect(`/discussion/${discussion._id}`);
+
+});
+
+app.get("/reply/:id/edit", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can edit
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    res.render("pages/editReply", {
+        reply,
+        error: null
+    });
+
+});
+
+app.post("/reply/:id/edit", sessionValidation, async (req, res) => {
+
+    const validation = replySchema.validate(req.body);
+
+    if (validation.error) {
+        return res.status(400).send(
+            validation.error.details[0].message
+        );
+    }
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can edit
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await repliesCollection.updateOne(
+        { _id: reply._id },
+        {
+            $set: {
+                message: req.body.message,
+                editedAt: new Date()
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
+app.post("/reply/:id/delete", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    // Only the author can delete
+    if (reply.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    await repliesCollection.deleteOne({
+        _id: reply._id
+    });
+
+    // Decrease the discussion's reply count
+    await discussionsCollection.updateOne(
+        { _id: reply.discussionId },
+        {
+            $inc: {
+                replyCount: -1
+            }
+        }
+    );
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
+app.post("/reply/:id/like", sessionValidation, async (req, res) => {
+
+    const reply = await repliesCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!reply) {
+        return res.status(404).send("Reply not found.");
+    }
+
+    const existingLike = await likesCollection.findOne({
+        replyId: reply._id,
+        userId: req.session.userId
+    });
+
+    if (existingLike) {
+
+        await likesCollection.deleteOne({
+            _id: existingLike._id
+        });
+
+    } else {
+
+        await likesCollection.insertOne({
+            replyId: reply._id,
+            userId: req.session.userId,
+            createdAt: new Date()
+        });
+
+    }
+
+    res.redirect(`/discussion/${reply.discussionId}`);
+});
+
+app.post("/discussion/:id/delete", sessionValidation, async (req, res) => {
+
+    const discussion = await discussionsCollection.findOne({
+        _id: new ObjectId(req.params.id)
+    });
+
+    if (!discussion) {
+        return res.status(404).send("Discussion not found.");
+    }
+
+    // Only the author can delete
+    if (discussion.authorId.toString() !== req.session.userId.toString()) {
+        return res.status(403).send("Unauthorized.");
+    }
+
+    // Delete all replies
+    await repliesCollection.deleteMany({
+        discussionId: discussion._id
+    });
+
+    // Delete discussion
+    await discussionsCollection.deleteOne({
+        _id: discussion._id
+    });
+
+    res.redirect(`/discuss/${discussion.sport}`);
+});
+
+app.get("/quiz", sessionValidation, (req, res) => {
+
+    const shuffledQuestions = [...quizQuestions]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 10)
+        .map(question => ({
+            ...question,
+            options: [...question.options]
+                .sort(() => Math.random() - 0.5)
+        }));
+
+    // store questions in user's session
+    req.session.quizQuestions = shuffledQuestions;
+    req.session.quizAnswers = {};
+    req.session.currentQuestion = 0;
+
+    res.render("pages/quiz", {
+        question: shuffledQuestions[0],
+        questionNumber: 1,
+        totalQuestions: shuffledQuestions.length
+    });
+});
+
+app.post("/quiz/answer", sessionValidation, (req, res) => {
+
+    if (!req.session.quizQuestions) {
+        return res.redirect("/quiz");
+    }
+
+    const questions = req.session.quizQuestions;
+    const currentQuestion = req.session.currentQuestion;
+
+    const question = questions[currentQuestion];
+
+    const userAnswer = req.body.answer;
+
+    // Store the user's answer
+    req.session.quizAnswers[question.id] = userAnswer;
+
+    // Move to the next question
+    req.session.currentQuestion++;
+
+    // Check if quiz is finished
+    if (req.session.currentQuestion >= questions.length) {
+
+        let score = 0;
+
+        questions.forEach(question => {
+
+            const answer = req.session.quizAnswers[question.id];
+
+            if (answer === question.answer) {
+                score++;
+            }
+
+        });
+
+        return res.render("pages/quiz-results", {
+            score: score,
+            total: questions.length
+        });
+    }
+
+    // Show next question
+    const nextQuestion = questions[req.session.currentQuestion];
+
+    res.render("pages/quiz", {
+        question: nextQuestion,
+        questionNumber: req.session.currentQuestion + 1,
+        totalQuestions: questions.length
+    });
 
 });
 
