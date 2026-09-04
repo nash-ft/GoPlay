@@ -72,4 +72,31 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+<% if (score === total) { %>
+
+<script>
+    const duration = 2000;
+    const end = Date.now() + duration;
+
+    const interval = setInterval(() => {
+        if (Date.now() > end) {
+            clearInterval(interval);
+            return;
+        }
+
+        confetti({
+            particleCount: 50,
+            spread: 100,
+            origin: {
+                x: 0.5,
+                y: 0.5
+            }
+        });
+    }, 350);
+</script>
+
+<% } %>
+
 <%- include("../templates/footer") %>
