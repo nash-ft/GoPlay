@@ -48,6 +48,10 @@ const repliesCollection = client
     .db(mongodb_user_database)
     .collection("likes");
 
+const gamesCollection = client
+    .db(mongodb_user_database)
+    .collection("games");
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -973,6 +977,291 @@ app.post("/quiz/answer", sessionValidation, (req, res) => {
         questionNumber: req.session.currentQuestion + 1,
         totalQuestions: questions.length
     });
+
+});
+
+// Games
+app.get("/games", sessionValidation, async (req, res) => {
+
+    const games = await gamesCollection
+        .find({})
+        .sort({ date: 1 })
+        .toArray();
+
+    res.render("pages/findGame", {
+        games: games
+    });
+
+});
+
+app.get("/games/new", sessionValidation, (req, res) => {
+
+    res.render("pages/createGame");
+
+});
+
+app.post("/games/new", sessionValidation, async (req, res) => {
+
+    const {
+        title,
+        sport,
+        location,
+        date,
+        time,
+        maxPlayers
+    } = req.body;
+
+    const newGame = {
+        title: title,
+        sport: sport,
+        location: location,
+        date: date,
+        time: time,
+        maxPlayers: parseInt(maxPlayers),
+        players: [new ObjectId(req.session.userId)],
+        createdBy: new ObjectId(req.session.userId),
+        createdAt: new Date()
+    };
+
+    await gamesCollection.insertOne(newGame);
+
+    res.redirect("/games");
+
+});
+
+app.get("/games/:id", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found");
+        }
+
+        const players = await userCollection.find({
+            _id: {
+                $in: game.players
+            }
+        }).toArray();
+
+        res.render("pages/gameDetails", {
+            game: game,
+            players: players,
+            userId: req.session.userId
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong");
+
+    }
+
+});
+
+app.post("/games/:id/join", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        const userId = new ObjectId(req.session.userId);
+
+        // Check if user already joined
+        const alreadyJoined = game.players.some(
+            playerId => playerId.toString() === userId.toString()
+        );
+
+        if (alreadyJoined) {
+            return res.redirect(`/games/${game._id}`);
+        }
+
+        // Check if game is full
+        if (game.players.length >= game.maxPlayers) {
+            return res.redirect(`/games/${game._id}`);
+        }
+
+        // Add player
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $push: {
+                    players: userId
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/leave", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        const userId = new ObjectId(req.session.userId);
+
+        // Remove the current user from the players array
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $pull: {
+                    players: userId
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.get("/games/:id/edit", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only the creator can edit
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        res.render("pages/editGame", {
+            game: game,
+            error: null
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/edit", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only creator can edit
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        const maxPlayers = parseInt(req.body.maxPlayers);
+
+        if (maxPlayers < game.players.length) {
+            return res.status(400).send(
+                "Maximum players cannot be less than current players."
+            );
+        }
+
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $set: {
+                    title: req.body.title,
+                    sport: req.body.sport,
+                    location: req.body.location,
+                    date: req.body.date,
+                    time: req.body.time,
+                    maxPlayers: maxPlayers
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/delete", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only the creator can delete
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        await gamesCollection.deleteOne({
+            _id: game._id
+        });
+
+        res.redirect("/games");
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
 
 });
 
