@@ -22,6 +22,133 @@
 
     </div>
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+
+            <form action="/games" method="GET">
+
+                <div class="row g-3">
+
+                    <!-- Search -->
+                    <div class="col-md-5">
+
+                        <label class="form-label">
+                            Search
+                        </label>
+
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-control"
+                            placeholder="Search games or locations..."
+                            value="<%= search || '' %>">
+
+                    </div>
+
+                    <!-- Sport -->
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Sport
+                        </label>
+
+                        <select
+                            name="sport"
+                            class="form-select">
+
+                            <option value="all">
+                                All Sports
+                            </option>
+
+                            <option value="Soccer"
+                                <%= sport === "Soccer" ? "selected" : "" %>>
+                                ⚽ Soccer
+                            </option>
+
+                            <option value="Basketball"
+                                <%= sport === "Basketball" ? "selected" : "" %>>
+                                🏀 Basketball
+                            </option>
+
+                            <option value="Tennis"
+                                <%= sport === "Tennis" ? "selected" : "" %>>
+                                🎾 Tennis
+                            </option>
+
+                            <option value="Baseball"
+                                <%= sport === "Baseball" ? "selected" : "" %>>
+                                ⚾ Baseball
+                            </option>
+
+                            <option value="Volleyball"
+                                <%= sport === "Volleyball" ? "selected" : "" %>>
+                                🏐 Volleyball
+                            </option>
+
+                            <option value="Golf"
+                                <%= sport === "Golf" ? "selected" : "" %>>
+                                ⛳ Golf
+                            </option>
+
+                            <option value="Swimming"
+                                <%= sport === "Swimming" ? "selected" : "" %>>
+                                🏊 Swimming
+                            </option>
+
+                            <option value="Running"
+                                <%= sport === "Running" ? "selected" : "" %>>
+                                🏃 Running
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Availability -->
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            Availability
+                         </label>
+
+                        <select
+                            name="availability"
+                            class="form-select">
+
+                            <option value="all"
+                                <%= availability === "all" ? "selected" : "" %>>
+                                All Games
+                            </option>
+
+                            <option value="open"
+                                <%= availability === "open" ? "selected" : "" %>>
+                                Open Spots
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- Search button -->
+                    <div class="col-md-2 d-flex align-items-end">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100">
+
+                            Search
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
     <% if (games.length === 0) { %>
 
         <div class="alert alert-secondary">
@@ -36,43 +163,77 @@
 
                 <div class="col-lg-4 col-md-6">
 
-                    <div class="card shadow-sm h-100">
+                    <div class="card game-card shadow-sm h-100 border-0">
 
-                        <div class="card-body">
+                        <div class="card-body p-4">
 
-                            <h4>
+                            <!-- Sport -->
+                            <div class="mb-3">
+
+                                <span class="badge bg-primary">
+                                    <%= game.sport %>
+                                </span>
+
+                            </div>
+
+                            <!-- Title -->
+                            <h4 class="fw-bold mb-3">
                                 <%= game.title %>
                             </h4>
 
-                            <p class="text-muted mb-2">
-                                <%= game.sport %>
-                            </p>
+                            <!-- Game information -->
+                            <div class="game-info">
 
-                            <p>
-                                📍 <%= game.location %>
-                            </p>
+                                <p class="mb-2">
+                                <span class="me-2">📍</span>
+                                <%= game.location %>
+                                </p>
 
-                            <p>
-                                📅 <%= game.date %>
-                            </p>
+                                <p class="mb-2">
+                                <span class="me-2">📅</span>
+                                <%= game.date %>
+                                </p>
 
-                            <p>
-                                🕐 <%= game.time %>
-                            </p>
+                                <p class="mb-3">
+                                <span class="me-2">🕐</span>
+                                <%= game.time %>
+                                </p>
 
-                            <p>
-                                👥
-                                <%= game.players.length %>
-                                /
-                                <%= game.maxPlayers %>
-                                players
-                            </p>
+                            </div>
 
+                            <!-- Players -->
+                            <div class="mb-3">
+
+                                <div class="d-flex justify-content-between mb-1">
+
+                                    <span class="text-muted">
+                                        Players
+                                    </span>
+
+                                    <span class="fw-semibold">
+                                        <%= game.players.length %>/<%= game.maxPlayers %>
+                                    </span>
+
+                                </div>
+
+                                <div class="progress" style="height: 7px;">
+
+                                    <div
+                                        class="progress-bar"
+                                        role="progressbar"
+                                        style="--progress: <%= (game.players.length / game.maxPlayers) * 100 %>%">
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- View button -->
                             <a
                                 href="/games/<%= game._id %>"
-                                class="btn btn-outline-primary">
+                                class="btn btn-outline-primary w-100 mt-2">
 
-                                View Game
+                                View Game →
 
                             </a>
 
