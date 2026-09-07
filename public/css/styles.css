@@ -604,3 +604,24 @@ button {
     justify-content: center;
     align-items: center;
 }
+
+/* Games */
+.game-card {
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.game-info p {
+    color: #555;
+}
+
+.game-card .btn {
+    border-radius: 10px;
+    font-weight: 500;
+}
+

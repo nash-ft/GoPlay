@@ -983,14 +983,74 @@ app.post("/quiz/answer", sessionValidation, (req, res) => {
 // Games
 app.get("/games", sessionValidation, async (req, res) => {
 
-    const games = await gamesCollection
-        .find({})
-        .sort({ date: 1 })
-        .toArray();
+    try {
 
-    res.render("pages/findGame", {
-        games: games
-    });
+        const { search, sport, availability } = req.query;
+
+        const filter = {};
+
+        // Sport filter
+        if (sport && sport !== "all") {
+
+            filter.sport = sport;
+
+        }
+
+        // Search by title or location
+        if (search) {
+
+            filter.$or = [
+                {
+                    title: {
+                        $regex: search,
+                        $options: "i"
+                    }
+                },
+                {
+                    location: {
+                        $regex: search,
+                        $options: "i"
+                    }
+                }
+            ];
+
+        }
+
+        const games = await gamesCollection
+            .find(filter)
+            .sort({ date: 1 })
+            .toArray();
+
+        let filteredGames = games;
+
+        // Only show games with available spots
+        if (availability === "open") {
+
+            filteredGames = games.filter(
+                game => game.players.length < game.maxPlayers
+            );
+
+        }
+
+        res.render("pages/findGame", {
+
+            games: filteredGames,
+
+            search: search || "",
+
+            sport: sport || "all",
+
+            availability: availability || "all"
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).send("Something went wrong.");
+
+    }
 
 });
 
