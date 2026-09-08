@@ -52,6 +52,10 @@ const gamesCollection = client
     .db(mongodb_user_database)
     .collection("games");
 
+const quizResultsCollection = client
+    .db(mongodb_user_database)
+    .collection("quizResults");
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -572,7 +576,7 @@ app.post("/discuss/:sport/new", sessionValidation, async (req, res) => {
 
         description: req.body.description,
 
-        authorId: req.session.userId,
+        authorId: new ObjectId(req.session.userId),
 
         authorName: req.session.name,
 
@@ -929,7 +933,7 @@ app.get("/quiz", sessionValidation, (req, res) => {
     });
 });
 
-app.post("/quiz/answer", sessionValidation, (req, res) => {
+app.post("/quiz/answer", sessionValidation, async (req, res) => {
 
     if (!req.session.quizQuestions) {
         return res.redirect("/quiz");
@@ -950,17 +954,24 @@ app.post("/quiz/answer", sessionValidation, (req, res) => {
 
     // Check if quiz is finished
     if (req.session.currentQuestion >= questions.length) {
-
+        
         let score = 0;
 
         questions.forEach(question => {
-
             const answer = req.session.quizAnswers[question.id];
 
             if (answer === question.answer) {
                 score++;
             }
+        });
 
+        // Save quiz result
+        await quizResultsCollection.insertOne({
+            userId: new ObjectId(req.session.userId),
+            score: score,
+            total: questions.length,
+            percentage: Math.round((score / questions.length) * 100),
+            completedAt: new Date()
         });
 
         return res.render("pages/quiz-results", {
@@ -1323,6 +1334,206 @@ app.post("/games/:id/delete", sessionValidation, async (req, res) => {
 
     }
 
+});
+
+app.get("/profile", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const user = await userCollection.findOne({
+      _id: userId
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    const quizResults = await quizResultsCollection
+        .find({ userId })
+        .toArray();
+
+    let sportsIQ = 0;
+
+    if (quizResults.length > 0) {
+    const totalCorrect = quizResults.reduce(
+        (sum, result) => sum + result.score,
+        0
+    );
+
+    const totalQuestions = quizResults.reduce(
+        (sum, result) => sum + result.total,
+        0
+    );
+
+    sportsIQ = Math.round(
+        (totalCorrect / totalQuestions) * 100
+    );
+    }
+
+    const gamesJoined = await gamesCollection.countDocuments({
+      players: userId
+    });
+
+    const discussions = await discussionsCollection.countDocuments({
+      authorId: userId
+    });
+
+    const myGames = await gamesCollection
+      .find({ players: userId })
+      .sort({ date: 1 })
+      .toArray();
+
+    const myDiscussions = await discussionsCollection
+      .find({ authorId: userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.render("pages/profile", {
+      user,
+      gamesJoined,
+      discussions,
+      myGames,
+      myDiscussions,
+      sportsIQ
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.get("/profile/edit", sessionValidation, async (req, res) => {
+  try {
+    const user = await userCollection.findOne({
+      _id: new ObjectId(req.session.userId)
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    res.render("pages/editProfile", {
+      user,
+      error: null
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.post("/profile/edit", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const { username, email } = req.body;
+
+    if (!username || !email) {
+      const user = await userCollection.findOne({ _id: userId });
+
+      return res.render("pages/editProfile", {
+        user,
+        error: "Username and email are required."
+      });
+    }
+
+    await userCollection.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          username: username.trim(),
+          email: email.trim()
+        }
+      }
+    );
+
+    // Update session username
+    req.session.name = username.trim();
+
+    res.redirect("/profile");
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.get("/profile/change-password", sessionValidation, (req, res) => {
+  res.render("pages/changePassword", {
+    error: null,
+    success: null
+  });
+});
+
+app.post("/profile/change-password", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    const user = await userCollection.findOne({
+      _id: userId
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    // Check current password
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!passwordMatch) {
+      return res.render("pages/changePassword", {
+        error: "Current password is incorrect.",
+        success: null
+      });
+    }
+
+    // Check new passwords match
+    if (newPassword !== confirmPassword) {
+      return res.render("pages/changePassword", {
+        error: "New passwords do not match.",
+        success: null
+      });
+    }
+
+    // Basic password requirement
+    if (newPassword.length < 8) {
+      return res.render("pages/changePassword", {
+        error: "Password must be at least 8 characters.",
+        success: null
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      saltRounds
+    );
+
+    await userCollection.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          password: hashedPassword
+        }
+      }
+    );
+
+    res.render("pages/changePassword", {
+      error: null,
+      success: "Your password has been changed successfully."
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
 });
 
 app.get("/logout", (req, res) => {

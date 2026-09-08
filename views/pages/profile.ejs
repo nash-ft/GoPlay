@@ -1,0 +1,210 @@
+<%- include("../templates/header") %>
+
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+    <div class="card shadow-sm border-0 profile-card">
+
+        <div class="card-body p-4 p-md-5">
+
+            <div class="text-center">
+
+                <div class="mb-3">
+                    <div class="profile-icon">👤</div>
+                </div>
+
+                <h1 class="display-6 fw-bold">
+                    <%= user.username %>
+                </h1>
+
+                <p>
+                    <%= user.email %>
+                </p>
+
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="/profile/edit" style="text-decoration: none;">
+                    Edit Profile
+                    </a>
+
+                    <a href="/profile/change-password" class="text-secondary" style="text-decoration: none;">
+                    Change Password
+                    </a>
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row text-center">
+
+                <div class="col-md-4 mb-3 mb-md-0">
+
+                    <h3 class="fw-bold"><%= gamesJoined %></h3>
+                    <p class="mb-0">Games Joined</p>
+
+                </div>
+
+                <div class="col-md-4 mb-3 mb-md-0">
+
+                    <h3 class="fw-bold"><%= discussions %></h3>
+                    <p class="mb-0">Discussions</p>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <h3 class="fw-bold"><%= sportsIQ %>%</h3>
+                    <p class="mb-0">Sports IQ</p>
+
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="fw-bold mb-0">My Games</h3>
+                    <a href="/games" class="btn btn-sm btn-outline-primary">
+                    Find Games
+                    </a>
+                </div>
+
+                <% if (myGames.length === 0) { %>
+
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-3">
+                            You haven't joined any games yet.
+                        </p>
+
+                        <a href="/games" class="btn btn-primary">
+                            Find a Game
+                        </a>
+                    </div>
+
+                <% } else { %>
+
+                    <div class="row g-3">
+
+                    <% myGames.forEach(game => { %>
+
+                        <div class="col-md-6">
+
+                            <div class="card border-0 bg-dark h-100">
+                                <div class="card-body">
+
+                                <span class="badge bg-primary mb-2">
+                                    <%= game.sport %>
+                                </span>
+
+                                <h5 class="fw-bold">
+                                    <%= game.title %>
+                                </h5>
+
+                                <p class="mb-1">
+                                    📍 <%= game.location %>
+                                </p>
+
+                                <p class="mb-1">
+                                    📅 <%= game.date %>
+                                </p>
+
+                                <p class="mb-3">
+                                    🕐 <%= game.time %>
+                                </p>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small>
+                                    👥 <%= game.players.length %>/<%= game.maxPlayers %>
+                                    </small>
+
+                                    <a
+                                    href="/games/<%= game._id %>"
+                                    class="btn btn-sm btn-outline-primary"
+                                    >
+                                    View
+                                    </a>
+                                </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    <% }) %>
+
+                    </div>
+
+                <% } %>
+            </div>
+
+            <hr class="my-4">
+
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold mb-0">My Discussions</h3>
+    <a href="/discuss" class="btn btn-sm btn-outline-primary">
+      Discussions
+    </a>
+  </div>
+
+  <% if (myDiscussions.length === 0) { %>
+
+    <div class="text-center py-4">
+      <p class="text-muted mb-3">
+        You haven't started any discussions yet.
+      </p>
+
+      <a href="/discuss" class="btn btn-primary">
+        Start a Discussion
+      </a>
+    </div>
+
+  <% } else { %>
+
+    <div class="list-group">
+
+      <% myDiscussions.forEach(discussion => { %>
+
+        <a
+          href="/discussion/<%= discussion._id %>"
+          class="list-group-item list-group-item-action border-0 bg-dark text-white mb-2 rounded-3 p-3"
+        >
+
+          <div class="d-flex justify-content-between align-items-start">
+
+            <div>
+              <h5 class="fw-bold mb-1">
+                <%= discussion.title %>
+              </h5>
+
+              <p class="mb-0">
+                <%= discussion.sport %>
+              </p>
+            </div>
+
+            <span class="text-primary">
+              →
+            </span>
+
+          </div>
+
+        </a>
+
+      <% }) %>
+
+    </div>
+
+  <% } %>
+</div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include("../templates/footer") %>

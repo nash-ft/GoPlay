@@ -1,0 +1,74 @@
+<%- include("../templates/header") %>
+<%- include("../templates/navbar") %>
+
+<div class="content">
+
+  <div class="card shadow-sm border-0 profile-card">
+    <div class="card-body p-4 p-md-5">
+
+      <h1 class="display-6 fw-bold mb-2">
+        Edit Profile
+      </h1>
+
+      <p class="text-muted mb-4">
+        Update your account information.
+      </p>
+
+      <% if (error) { %>
+        <div class="alert alert-danger">
+          <%= error %>
+        </div>
+      <% } %>
+
+      <form action="/profile/edit" method="POST">
+
+        <div class="mb-3">
+          <label for="username" class="form-label fw-semibold">
+            Username
+          </label>
+
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            value="<%= user.username %>"
+            required
+          >
+        </div>
+
+        <div class="mb-4">
+          <label for="email" class="form-label fw-semibold">
+            Email
+          </label>
+
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-control"
+            value="<%= user.email %>"
+            required
+          >
+        </div>
+
+        <div class="d-flex gap-2">
+
+          <button type="submit" class="btn btn-primary">
+            Save Changes
+          </button>
+
+          <a href="/profile" class="btn btn-outline-secondary">
+            Cancel
+          </a>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<%- include("../templates/footer") %>
