@@ -94,6 +94,50 @@ body {
     color: #b02a37 !important;
 }
 
+/* Navbar collapse */
+@media (max-width: 991.98px) {
+
+  .custom-navbar {
+    position: relative;
+  }
+
+  .custom-navbar .container-fluid {
+    position: relative;
+  }
+
+  .custom-navbar .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 240px;
+    padding: 15px;
+
+    background: #000;
+    border-radius: 0 0 12px 12px;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+
+    z-index: 1000;
+  }
+
+  .custom-navbar .navbar-nav {
+    margin-left: 0 !important;
+  }
+
+  .custom-navbar .navbar-nav .nav-link {
+    padding: 10px 5px;
+  }
+
+  .custom-navbar .ms-auto {
+    margin-left: 0 !important;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+}
+
 /* Signup card */
 .signup-card {
     background-color: #1f2937;
