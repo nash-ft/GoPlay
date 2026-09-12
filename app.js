@@ -48,6 +48,14 @@ const repliesCollection = client
     .db(mongodb_user_database)
     .collection("likes");
 
+const gamesCollection = client
+    .db(mongodb_user_database)
+    .collection("games");
+
+const quizResultsCollection = client
+    .db(mongodb_user_database)
+    .collection("quizResults");
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -568,7 +576,7 @@ app.post("/discuss/:sport/new", sessionValidation, async (req, res) => {
 
         description: req.body.description,
 
-        authorId: req.session.userId,
+        authorId: new ObjectId(req.session.userId),
 
         authorName: req.session.name,
 
@@ -925,7 +933,7 @@ app.get("/quiz", sessionValidation, (req, res) => {
     });
 });
 
-app.post("/quiz/answer", sessionValidation, (req, res) => {
+app.post("/quiz/answer", sessionValidation, async (req, res) => {
 
     if (!req.session.quizQuestions) {
         return res.redirect("/quiz");
@@ -946,17 +954,24 @@ app.post("/quiz/answer", sessionValidation, (req, res) => {
 
     // Check if quiz is finished
     if (req.session.currentQuestion >= questions.length) {
-
+        
         let score = 0;
 
         questions.forEach(question => {
-
             const answer = req.session.quizAnswers[question.id];
 
             if (answer === question.answer) {
                 score++;
             }
+        });
 
+        // Save quiz result
+        await quizResultsCollection.insertOne({
+            userId: new ObjectId(req.session.userId),
+            score: score,
+            total: questions.length,
+            percentage: Math.round((score / questions.length) * 100),
+            completedAt: new Date()
         });
 
         return res.render("pages/quiz-results", {
@@ -974,6 +989,551 @@ app.post("/quiz/answer", sessionValidation, (req, res) => {
         totalQuestions: questions.length
     });
 
+});
+
+// Games
+app.get("/games", sessionValidation, async (req, res) => {
+
+    try {
+
+        const { search, sport, availability } = req.query;
+
+        const filter = {};
+
+        // Sport filter
+        if (sport && sport !== "all") {
+
+            filter.sport = sport;
+
+        }
+
+        // Search by title or location
+        if (search) {
+
+            filter.$or = [
+                {
+                    title: {
+                        $regex: search,
+                        $options: "i"
+                    }
+                },
+                {
+                    location: {
+                        $regex: search,
+                        $options: "i"
+                    }
+                }
+            ];
+
+        }
+
+        const games = await gamesCollection
+            .find(filter)
+            .sort({ date: 1 })
+            .toArray();
+
+        let filteredGames = games;
+
+        // Only show games with available spots
+        if (availability === "open") {
+
+            filteredGames = games.filter(
+                game => game.players.length < game.maxPlayers
+            );
+
+        }
+
+        res.render("pages/findGame", {
+
+            games: filteredGames,
+
+            search: search || "",
+
+            sport: sport || "all",
+
+            availability: availability || "all"
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.get("/games/new", sessionValidation, (req, res) => {
+
+    res.render("pages/createGame");
+
+});
+
+app.post("/games/new", sessionValidation, async (req, res) => {
+
+    const {
+        title,
+        sport,
+        location,
+        date,
+        time,
+        maxPlayers
+    } = req.body;
+
+    const newGame = {
+        title: title,
+        sport: sport,
+        location: location,
+        date: date,
+        time: time,
+        maxPlayers: parseInt(maxPlayers),
+        players: [new ObjectId(req.session.userId)],
+        createdBy: new ObjectId(req.session.userId),
+        createdAt: new Date()
+    };
+
+    await gamesCollection.insertOne(newGame);
+
+    res.redirect("/games");
+
+});
+
+app.get("/games/:id", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found");
+        }
+
+        const players = await userCollection.find({
+            _id: {
+                $in: game.players
+            }
+        }).toArray();
+
+        res.render("pages/gameDetails", {
+            game: game,
+            players: players,
+            userId: req.session.userId
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong");
+
+    }
+
+});
+
+app.post("/games/:id/join", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        const userId = new ObjectId(req.session.userId);
+
+        // Check if user already joined
+        const alreadyJoined = game.players.some(
+            playerId => playerId.toString() === userId.toString()
+        );
+
+        if (alreadyJoined) {
+            return res.redirect(`/games/${game._id}`);
+        }
+
+        // Check if game is full
+        if (game.players.length >= game.maxPlayers) {
+            return res.redirect(`/games/${game._id}`);
+        }
+
+        // Add player
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $push: {
+                    players: userId
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/leave", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        const userId = new ObjectId(req.session.userId);
+
+        // Remove the current user from the players array
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $pull: {
+                    players: userId
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.get("/games/:id/edit", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only the creator can edit
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        res.render("pages/editGame", {
+            game: game,
+            error: null
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/edit", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only creator can edit
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        const maxPlayers = parseInt(req.body.maxPlayers);
+
+        if (maxPlayers < game.players.length) {
+            return res.status(400).send(
+                "Maximum players cannot be less than current players."
+            );
+        }
+
+        await gamesCollection.updateOne(
+            { _id: game._id },
+            {
+                $set: {
+                    title: req.body.title,
+                    sport: req.body.sport,
+                    location: req.body.location,
+                    date: req.body.date,
+                    time: req.body.time,
+                    maxPlayers: maxPlayers
+                }
+            }
+        );
+
+        res.redirect(`/games/${game._id}`);
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.post("/games/:id/delete", sessionValidation, async (req, res) => {
+
+    try {
+
+        const game = await gamesCollection.findOne({
+            _id: new ObjectId(req.params.id)
+        });
+
+        if (!game) {
+            return res.status(404).send("Game not found.");
+        }
+
+        // Only the creator can delete
+        if (
+            game.createdBy.toString() !== req.session.userId.toString()
+        ) {
+            return res.status(403).send("Unauthorized.");
+        }
+
+        await gamesCollection.deleteOne({
+            _id: game._id
+        });
+
+        res.redirect("/games");
+
+    } catch (error) {
+
+        console.error(error);
+        res.status(500).send("Something went wrong.");
+
+    }
+
+});
+
+app.get("/profile", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const user = await userCollection.findOne({
+      _id: userId
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    const quizResults = await quizResultsCollection
+        .find({ userId })
+        .toArray();
+
+    let sportsIQ = 0;
+
+    if (quizResults.length > 0) {
+    const totalCorrect = quizResults.reduce(
+        (sum, result) => sum + result.score,
+        0
+    );
+
+    const totalQuestions = quizResults.reduce(
+        (sum, result) => sum + result.total,
+        0
+    );
+
+    sportsIQ = Math.round(
+        (totalCorrect / totalQuestions) * 100
+    );
+    }
+
+    const gamesJoined = await gamesCollection.countDocuments({
+      players: userId
+    });
+
+    const discussions = await discussionsCollection.countDocuments({
+      authorId: userId
+    });
+
+    const myGames = await gamesCollection
+      .find({ players: userId })
+      .sort({ date: 1 })
+      .toArray();
+
+    const myDiscussions = await discussionsCollection
+      .find({ authorId: userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.render("pages/profile", {
+      user,
+      gamesJoined,
+      discussions,
+      myGames,
+      myDiscussions,
+      sportsIQ
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.get("/profile/edit", sessionValidation, async (req, res) => {
+  try {
+    const user = await userCollection.findOne({
+      _id: new ObjectId(req.session.userId)
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    res.render("pages/editProfile", {
+      user,
+      error: null
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.post("/profile/edit", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const { username, email } = req.body;
+
+    if (!username || !email) {
+      const user = await userCollection.findOne({ _id: userId });
+
+      return res.render("pages/editProfile", {
+        user,
+        error: "Username and email are required."
+      });
+    }
+
+    await userCollection.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          username: username.trim(),
+          email: email.trim()
+        }
+      }
+    );
+
+    // Update session username
+    req.session.name = username.trim();
+
+    res.redirect("/profile");
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.get("/profile/change-password", sessionValidation, (req, res) => {
+  res.render("pages/changePassword", {
+    error: null,
+    success: null
+  });
+});
+
+app.post("/profile/change-password", sessionValidation, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.session.userId);
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    const user = await userCollection.findOne({
+      _id: userId
+    });
+
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    // Check current password
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!passwordMatch) {
+      return res.render("pages/changePassword", {
+        error: "Current password is incorrect.",
+        success: null
+      });
+    }
+
+    // Check new passwords match
+    if (newPassword !== confirmPassword) {
+      return res.render("pages/changePassword", {
+        error: "New passwords do not match.",
+        success: null
+      });
+    }
+
+    // Basic password requirement
+    if (newPassword.length < 8) {
+      return res.render("pages/changePassword", {
+        error: "Password must be at least 8 characters.",
+        success: null
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      saltRounds
+    );
+
+    await userCollection.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          password: hashedPassword
+        }
+      }
+    );
+
+    res.render("pages/changePassword", {
+      error: null,
+      success: "Your password has been changed successfully."
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Something went wrong.");
+  }
 });
 
 app.get("/logout", (req, res) => {
